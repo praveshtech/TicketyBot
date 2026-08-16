@@ -130,10 +130,7 @@ client.on('interactionCreate', async interaction => {
                             ],
                         },
                         // Gagan's 7-second block
-                        {
-                            id: gaganUserId,
-                            deny: [PermissionsBitField.Flags.ViewChannel],
-                        }
+                        
                     ]
                 });
 

@@ -10,13 +10,13 @@ const {
     ButtonBuilder, 
     ButtonStyle,
     ChannelType,
-    PermissionsBitField, // Yahan comma missing tha, fix kar diya
+    PermissionsBitField,
     ModalBuilder,
     TextInputBuilder,
     TextInputStyle
 } = require('discord.js');
 
-// 1. Initialize the Bot Client with required intents
+// 1. Initialize the Bot Client
 const client = new Client({ 
     intents: [
         GatewayIntentBits.Guilds,
@@ -47,23 +47,21 @@ client.once('ready', async () => {
     }
 });
 
-// 4. Handle Interactions (Slash Commands, Button Clicks & Modal Submits)
+// 4. Handle Interactions
 client.on('interactionCreate', async interaction => {
     
     // --- PART A: SLASH COMMAND LOGIC (/support) ---
     if (interaction.isChatInputCommand()) {
         if (interaction.commandName === 'support') {
             
-            // Main Support Panel Embed
             const ticketEmbed = new EmbedBuilder()
-                .setColor(0x3498DB) // Matched blue color
+                .setColor(0x3498DB)
                 .setDescription("**🎯 Create a ticket below and our team will assist you 👇**\n\n🎟️ Support Ticket\n\n(Account problems, payouts, rule questions, claim your giveaway reward, giveaway-related queries)")
                 .setFooter({ 
                     text: 'Tickety | Tickety.top', 
                     iconURL: client.user.displayAvatarURL() 
                 });
 
-            // "Support / Issues" Button
             const ticketButton = new ButtonBuilder()
                 .setCustomId('open_ticket_issue')
                 .setLabel('Support / Issues')
@@ -73,13 +71,11 @@ client.on('interactionCreate', async interaction => {
             const row = new ActionRowBuilder().addComponents(ticketButton);
 
             try {
-                // Silently acknowledge the command executor
                 await interaction.reply({ 
                     content: '✅ Ticket panel setup successful!', 
                     ephemeral: true 
                 });
 
-                // Send the actual panel to the channel
                 await interaction.channel.send({ 
                     embeds: [ticketEmbed], 
                     components: [row] 
@@ -102,12 +98,15 @@ client.on('interactionCreate', async interaction => {
 
             const userName = interaction.user.username.toLowerCase();
             const channelName = `1️⃣-support--issues-${userName}`;
+            
+            // --- GAGAN KI DISCORD ID ---
+            const gaganUserId = 'GAGAN_KI_USER_ID_YAHAN_DALO'; // Replace this with his actual User ID
 
             try {
                 const ticketChannel = await interaction.guild.channels.create({
                     name: channelName,
                     type: ChannelType.GuildText,
-                    parent: '1538250489840279653', // <-- YE NAYI LINE ADD KI HAI (Category ID)
+                    parent: '1538250489840279653', // Category ID
                     permissionOverwrites: [
                         {
                             id: interaction.guild.id, 
@@ -129,6 +128,11 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ManageChannels,
                                 PermissionsBitField.Flags.ManageMessages 
                             ],
+                        },
+                        // Gagan's 7-second block
+                        {
+                            id: gaganUserId,
+                            deny: [PermissionsBitField.Flags.ViewChannel],
                         }
                     ]
                 });
@@ -168,6 +172,22 @@ client.on('interactionCreate', async interaction => {
                 });
 
                 await sentMessage.pin();
+
+                // 7 Second Delay Logic for Gagan
+                setTimeout(async () => {
+                    try {
+                        const channelExists = interaction.guild.channels.cache.get(ticketChannel.id);
+                        if (channelExists) {
+                            await channelExists.permissionOverwrites.edit(gaganUserId, {
+                                ViewChannel: true,
+                                SendMessages: true,
+                                ReadMessageHistory: true
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error removing delay for Gagan:', error);
+                    }
+                }, 7000); 
 
                 await interaction.editReply({ 
                     content: `✅ Your ticket has been created here: ${ticketChannel}`, 
@@ -223,7 +243,7 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
-        // --- PART D: UNCLAIM TICKET (Ye miss ho gaya tha) ---
+        // --- PART D: UNCLAIM TICKET ---
         if (interaction.customId === 'unclaim_ticket') {
             try {
                 const staffRoles = ['1538228489738653757', '1538228843469340822'];
@@ -308,22 +328,58 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isModalSubmit()) {
         if (interaction.customId === 'close_ticket_modal') {
             try {
-                // Get the reason from the form
                 const reason = interaction.fields.getTextInputValue('close_reason_input');
-                const finalReason = reason ? reason : 'No reason provided';
+                const finalReason = reason ? reason : 'No further action required.';
 
-                // Send the final closing message in the ticket
+                // Notify in channel
                 await interaction.reply({ 
                     content: `🔒 This ticket has been closed by <@${interaction.user.id}>.\n**Reason:** ${finalReason}\n\n*The channel will be deleted in 5 seconds...*`
                 });
 
-                // --- TICKET LOGGING LOGIC STARTS HERE ---
-                // Yahan aapki actual Logs Channel ID set kar di gayi hai
+                // --- DM TO CREATOR LOGIC ---
+                const creatorUsername = interaction.channel.name.split('-').pop(); 
+                const creatorMember = interaction.guild.members.cache.find(m => m.user.username.toLowerCase() === creatorUsername.toLowerCase());
+
+                if (creatorMember) {
+                    const dmEmbed = new EmbedBuilder()
+                        .setColor(0x3498DB)
+                        .setTitle('Ticket Closed')
+                        .setDescription(`Your ticket has been closed in **Night Trader - Propfirm Community!**\n\n**Ticket Information**\n• **Open Date:** <t:${Math.floor(interaction.channel.createdTimestamp / 1000)}:f>\n• **Panel Name:** 1️⃣ Support / Issues\n• **Ticket Name:** ${interaction.channel.name}\n\n**Close Information**\n• **Closed By:** <@${interaction.user.id}>\n• **Close Date:** <t:${Math.floor(Date.now() / 1000)}:f>\n• **Close Reason:** ${finalReason}\n\n*If you have any further questions or concerns, feel free to open a new ticket.*`)
+                        .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
+
+                    const voteBtn = new ButtonBuilder()
+                        .setLabel('Vote for Tickety')
+                        .setURL('https://top.gg/bot/tickety') 
+                        .setEmoji('⚡')
+                        .setStyle(ButtonStyle.Link);
+                        
+                    const transcriptBtn = new ButtonBuilder()
+                        .setLabel('View Transcript')
+                        .setURL('https://tickety.top/') 
+                        .setEmoji('📄')
+                        .setStyle(ButtonStyle.Link);
+                        
+                    const rateBtn = new ButtonBuilder()
+                        .setLabel('Rate')
+                        .setURL('https://tickety.top/') 
+                        .setEmoji('⭐')
+                        .setStyle(ButtonStyle.Link);
+
+                    const dmRow1 = new ActionRowBuilder().addComponents(voteBtn);
+                    const dmRow2 = new ActionRowBuilder().addComponents(transcriptBtn, rateBtn);
+
+                    try {
+                        await creatorMember.send({ embeds: [dmEmbed], components: [dmRow1, dmRow2] });
+                    } catch (err) {
+                        console.error('User DMs are closed, could not send the message.');
+                    }
+                }
+
+                // --- TICKET LOGGING LOGIC ---
                 const logChannelId = '1538244777001099366'; 
                 const logChannel = interaction.client.channels.cache.get(logChannelId);
 
                 if (logChannel) {
-                    // Random Ticket ID generator (e.g. bs3U24CN7l4ZRyr295e)
                     const generateTicketId = () => {
                         const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
                         let result = '';
@@ -332,14 +388,12 @@ client.on('interactionCreate', async interaction => {
                     };
 
                     const logEmbed = new EmbedBuilder()
-                        .setColor(0x3498DB) // Same Blue color
+                        .setColor(0x3498DB) 
                         .setTitle('Ticket Closed')
                         .setDescription(`<@${interaction.user.id}> closed a ticket.\n**Reason:** ${finalReason}`)
                         .addFields(
                             {
                                 name: 'Ticket Information',
-                                // `>` creates the gray vertical blockquote line
-                                // <t:...:F> creates the native Discord timestamp
                                 value: `> **Ticket Name:** ${interaction.channel.name}\n> **Ticket ID:** ${generateTicketId()}\n> **Created At:** <t:${Math.floor(interaction.channel.createdTimestamp / 1000)}:F>`
                             },
                             {
@@ -352,12 +406,10 @@ client.on('interactionCreate', async interaction => {
                             iconURL: interaction.client.user.displayAvatarURL() 
                         });
 
-                    // Send the log embed to the logs channel
                     await logChannel.send({ embeds: [logEmbed] });
                 } else {
                     console.error('Log channel not found! Make sure the ID is correct and bot has access to it.');
                 }
-                // --- TICKET LOGGING LOGIC ENDS HERE ---
 
                 // Delete channel after 5 seconds
                 setTimeout(async () => {
@@ -371,5 +423,5 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-// 5. Login to Discord with your Bot's Token
+// 5. Login to Discord
 client.login(process.env.TOKEN);

@@ -100,7 +100,7 @@ client.on('interactionCreate', async interaction => {
             const channelName = `1️⃣-support--issues-${userName}`;
             
             // --- GAGAN KI DISCORD ID ---
-            const gaganUserId = 'GAGAN_KI_USER_ID_YAHAN_DALO'; // Replace this with his actual User ID
+            const gaganUserId = '123456789012345678'; // Replace this with his actual User ID
 
             try {
                 const ticketChannel = await interaction.guild.channels.create({

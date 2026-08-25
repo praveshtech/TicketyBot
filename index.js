@@ -18,7 +18,7 @@ const {
 
 // --- FIREBASE SETUP ---
 const admin = require('firebase-admin');
-const serviceAccount = require('./firebase-key.json'); // Make sure this file exists!
+const serviceAccount = require('./firebase-key.json');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -49,10 +49,10 @@ const client = new Client({
     ] 
 });
 
-// 2. Define Slash Commands
+// 2. Define Slash Commands (Updated to /ntsupport)
 const supportCommand = new SlashCommandBuilder()
     .setName('ntsupport')
-    .setDescription('Sets up the Tickety support panel.');
+    .setDescription('Sets up the Night Trader support panel.');
 
 const modStatsCommand = new SlashCommandBuilder()
     .setName('modstats')
@@ -75,9 +75,8 @@ client.once('ready', async () => {
 
 // --- MESSAGE TRACKER (Live Chat Activity) ---
 client.on('messageCreate', async message => {
-    if (message.author.bot) return; // Ignore bots
+    if (message.author.bot) return;
 
-    // Updated with new @support_team role ID
     const staffRoles = ['1415779033156812891', '1541719797447000084'];
     if (message.member && message.member.roles.cache.some(role => staffRoles.includes(role.id))) {
         await updateModStats(message.author.id, message.author.username, 'messagesSent');
@@ -108,9 +107,8 @@ client.on('interactionCreate', async interaction => {
             await interaction.channel.send({ embeds: [ticketEmbed], components: [row] });
         }
 
-        // --- NEW COMMAND: /modstats ---
+        // --- COMMAND: /modstats ---
         if (interaction.commandName === 'modstats') {
-            // Updated with new @support_team role ID
             const staffRoles = ['1415779033156812891', '1541719797447000084'];
             const isStaff = interaction.member.roles.cache.some(role => staffRoles.includes(role.id));
             
@@ -187,7 +185,6 @@ client.on('interactionCreate', async interaction => {
                 const claimBtn = new ButtonBuilder().setCustomId('claim_ticket').setLabel('Claim').setEmoji('🙌').setStyle(ButtonStyle.Secondary);
                 const ticketActionRow = new ActionRowBuilder().addComponents(closeBtn, claimBtn);
 
-                // Ping message updated with new @support_team role ID
                 const pingMessage = `<@${interaction.user.id}>, <@&1415779033156812891>, <@&1541719797447000084>`;
                 const sentMessage = await ticketChannel.send({ content: pingMessage, embeds: [welcomeEmbed], components: [ticketActionRow] });
                 await sentMessage.pin();
@@ -203,7 +200,6 @@ client.on('interactionCreate', async interaction => {
         // --- PART C: CLAIM TICKET ---
         if (interaction.customId === 'claim_ticket') {
             try {
-                // Updated with new @support_team role ID
                 const staffRoles = ['1415779033156812891', '1541719797447000084'];
                 if (!interaction.member.roles.cache.some(role => staffRoles.includes(role.id))) {
                     const errorEmbed = new EmbedBuilder()
@@ -220,7 +216,6 @@ client.on('interactionCreate', async interaction => {
                 await interaction.update({ components: [updatedRow] });
                 await interaction.channel.send({ content: `<@${interaction.user.id}> claimed this ticket.` });
 
-                // --- ADD TO FIREBASE: TICKET CLAIMED ---
                 await updateModStats(interaction.user.id, interaction.user.username, 'ticketsClaimed');
 
             } catch (error) {
@@ -230,7 +225,6 @@ client.on('interactionCreate', async interaction => {
 
         // --- PART D: UNCLAIM TICKET ---
         if (interaction.customId === 'unclaim_ticket') {
-            // Updated with new @support_team role ID
             const staffRoles = ['1415779033156812891', '1541719797447000084'];
             if (!interaction.member.roles.cache.some(role => staffRoles.includes(role.id))) {
                 const errorEmbed = new EmbedBuilder()
@@ -247,9 +241,8 @@ client.on('interactionCreate', async interaction => {
             await interaction.channel.send({ content: `<@${interaction.user.id}> unclaimed this ticket.` });
         }
 
-        // --- PART E: CLOSE TICKET (Opens Modal) ---
+        // --- PART E: CLOSE TICKET ---
         if (interaction.customId === 'close_ticket') {
-            // Updated with new @support_team role ID
             const staffRoles = ['1415779033156812891', '1541719797447000084'];
             const isStaff = interaction.member.roles.cache.some(role => staffRoles.includes(role.id));
             const userName = interaction.user.username.toLowerCase();
@@ -276,10 +269,8 @@ client.on('interactionCreate', async interaction => {
             const reason = interaction.fields.getTextInputValue('close_reason_input') || 'No further action required.';
             await interaction.reply({ content: `🔒 Closed by <@${interaction.user.id}>.\n**Reason:** ${reason}\n\n*Deleting in 5 seconds...*` });
 
-            // --- ADD TO FIREBASE: TICKET CLOSED ---
             await updateModStats(interaction.user.id, interaction.user.username, 'ticketsClosed');
 
-            // --- LOGGING ---
             const logChannel = interaction.client.channels.cache.get('1504228496577138789');
             if (logChannel) {
                 const logEmbed = new EmbedBuilder().setColor(0x3498DB).setTitle('Ticket Closed').setDescription(`Closed by <@${interaction.user.id}>\n**Reason:** ${reason}`);

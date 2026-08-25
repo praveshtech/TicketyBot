@@ -296,7 +296,7 @@ client.on('interactionCreate', async interaction => {
 
             // 3. LOGGING TO SERVER
             // 👇 DHYAN DEIN: Yahan apne naye '#ticket-logs' wale text channel ki ID daaliye warna ticket delete nahi hogi!
-            const logChannel = interaction.client.channels.cache.get('1504228496577138789'); 
+            const logChannel = interaction.client.channels.cache.get('1538244604611133440'); 
             if (logChannel) {
                 const generateTicketId = () => {
                     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

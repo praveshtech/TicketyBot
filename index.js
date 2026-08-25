@@ -98,9 +98,6 @@ client.on('interactionCreate', async interaction => {
 
             const userName = interaction.user.username.toLowerCase();
             const channelName = `1️⃣-support--issues-${userName}`;
-            
-            // 🛑 GAGAN KI ID (7-second sniper delay)
-            const gaganUserId = '1048219994011484220'; 
 
             try {
                 const ticketChannel = await interaction.guild.channels.create({
@@ -129,12 +126,8 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ManageChannels,
                                 PermissionsBitField.Flags.ManageMessages 
                             ],
-                        },
-                        // Gagan's 7-second block
-                        {
-                            id: gaganUserId,
-                            deny: [PermissionsBitField.Flags.ViewChannel],
                         }
+                        // Gagan aur Nishant ka block hata diya gaya hai
                     ]
                 });
 
@@ -175,21 +168,7 @@ client.on('interactionCreate', async interaction => {
 
                 await sentMessage.pin();
 
-                // 7 Second Delay Logic for Gagan
-                setTimeout(async () => {
-                    try {
-                        const channelExists = interaction.guild.channels.cache.get(ticketChannel.id);
-                        if (channelExists) {
-                            await channelExists.permissionOverwrites.edit(gaganUserId, {
-                                ViewChannel: true,
-                                SendMessages: true,
-                                ReadMessageHistory: true
-                            });
-                        }
-                    } catch (error) {
-                        console.error('Error removing delay for Gagan:', error);
-                    }
-                }, 7000); 
+                // 7-second delay wala timer yahan se completely remove kar diya hai
 
                 await interaction.editReply({ 
                     content: `✅ Your ticket has been created here: ${ticketChannel}`, 
@@ -198,7 +177,7 @@ client.on('interactionCreate', async interaction => {
             } catch (error) {
                 console.error('Error creating ticket:', error);
                 await interaction.editReply({ 
-                    content: '❌ There was an error creating the ticket. Make sure all IDs are correct numbers and bot has permissions!' 
+                    content: '❌ There was an error creating the ticket. Make sure bot has permissions!' 
                 });
             }
         }

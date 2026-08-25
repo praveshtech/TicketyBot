@@ -168,7 +168,7 @@ client.on('interactionCreate', async interaction => {
                 const ticketChannel = await interaction.guild.channels.create({
                     name: channelName,
                     type: ChannelType.GuildText,
-                    parent: '1504229014540124180', 
+                    parent: '1538250489840279653', 
                     permissionOverwrites: [
                         { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
                         { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory] },
@@ -314,7 +314,7 @@ client.on('interactionCreate', async interaction => {
             }
 
             // 3. LOGGING TO SERVER
-            const logChannel = interaction.client.channels.cache.get('1504228496577138789');
+            const logChannel = interaction.client.channels.cache.get('1538244604611133440');
             if (logChannel) {
                 const generateTicketId = () => {
                     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

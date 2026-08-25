@@ -93,7 +93,7 @@ client.on('interactionCreate', async interaction => {
             const ticketEmbed = new EmbedBuilder()
                 .setColor(0x3498DB)
                 .setDescription("**🎯 Create a ticket below and our team will assist you 👇**\n\n🎟️ Support Ticket\n\n(Account problems, payouts, rule questions, claim your giveaway reward, giveaway-related queries)")
-                .setFooter({ text: 'Tickety | Tickety.top', iconURL: client.user.displayAvatarURL() });
+                .setFooter({ text: 'Night Trader Support', iconURL: client.user.displayAvatarURL() });
 
             const ticketButton = new ButtonBuilder()
                 .setCustomId('open_ticket_issue')
@@ -283,7 +283,7 @@ client.on('interactionCreate', async interaction => {
                     .setColor(0x3498DB)
                     .setTitle('Ticket Closed')
                     .setDescription(`Your ticket has been closed in **Night Trader - Propfirm Community!**\n\n**Ticket Information**\n• **Open Date:** <t:${Math.floor(interaction.channel.createdTimestamp / 1000)}:f>\n• **Panel Name:** 1️⃣ Support / Issues\n• **Ticket Name:** ${interaction.channel.name}\n\n**Close Information**\n• **Closed By:** <@${interaction.user.id}>\n• **Close Date:** <t:${Math.floor(Date.now() / 1000)}:f>\n• **Close Reason:** ${finalReason}\n\n*If you have any further questions or concerns, feel free to open a new ticket.*`)
-                    .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
+                    .setFooter({ text: 'Night Trader Support', iconURL: interaction.client.user.displayAvatarURL() });
 
                 const voteBtn = new ButtonBuilder()
                     .setLabel('Vote for Tickety')
@@ -331,7 +331,7 @@ client.on('interactionCreate', async interaction => {
                         { name: 'Ticket Information', value: `> **Ticket Name:** ${interaction.channel.name}\n> **Ticket ID:** ${generateTicketId()}\n> **Created At:** <t:${Math.floor(interaction.channel.createdTimestamp / 1000)}:F>` },
                         { name: 'Executor Information', value: `> **Executor:** <@${interaction.user.id}>\n> **Executor Username:** @${interaction.user.username}\n> **Executor ID:** ${interaction.user.id}` }
                     )
-                    .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
+                    .setFooter({ text: 'Night Trader Support', iconURL: interaction.client.user.displayAvatarURL() });
 
                 await logChannel.send({ embeds: [logEmbed] });
             }

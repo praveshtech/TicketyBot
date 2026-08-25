@@ -314,7 +314,7 @@ client.on('interactionCreate', async interaction => {
             }
 
             // 3. LOGGING TO SERVER
-            const logChannel = interaction.client.channels.cache.get('1538244604611133440');
+            const logChannel = interaction.client.channels.cache.get('1538244777001099366');
             if (logChannel) {
                 const generateTicketId = () => {
                     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

@@ -77,7 +77,7 @@ client.once('ready', async () => {
 client.on('messageCreate', async message => {
     if (message.author.bot) return;
 
-    const staffRoles = ['1415779033156812891', '1541719797447000084'];
+    const staffRoles = ['1538228489738653757', '1541719797447000084'];
     if (message.member && message.member.roles.cache.some(role => staffRoles.includes(role.id))) {
         await updateModStats(message.author.id, message.author.username, 'messagesSent');
     }
@@ -109,7 +109,7 @@ client.on('interactionCreate', async interaction => {
 
         // --- COMMAND: /modstats ---
         if (interaction.commandName === 'modstats') {
-            const staffRoles = ['1415779033156812891', '1541719797447000084'];
+            const staffRoles = ['1538228489738653757', '1541719797447000084'];
             const isStaff = interaction.member.roles.cache.some(role => staffRoles.includes(role.id));
             
             if (!isStaff) {
@@ -185,7 +185,7 @@ client.on('interactionCreate', async interaction => {
                 const claimBtn = new ButtonBuilder().setCustomId('claim_ticket').setLabel('Claim').setEmoji('🙌').setStyle(ButtonStyle.Secondary);
                 const ticketActionRow = new ActionRowBuilder().addComponents(closeBtn, claimBtn);
 
-                const pingMessage = `<@${interaction.user.id}>, <@&1415779033156812891>, <@&1541719797447000084>`;
+                const pingMessage = `<@${interaction.user.id}>, <@&1538228489738653757>, <@&1541719797447000084>`;
                 const sentMessage = await ticketChannel.send({ content: pingMessage, embeds: [welcomeEmbed], components: [ticketActionRow] });
                 await sentMessage.pin();
 
@@ -200,12 +200,12 @@ client.on('interactionCreate', async interaction => {
         // --- PART C: CLAIM TICKET ---
         if (interaction.customId === 'claim_ticket') {
             try {
-                const staffRoles = ['1415779033156812891', '1541719797447000084'];
+                const staffRoles = ['1538228489738653757', '1541719797447000084'];
                 if (!interaction.member.roles.cache.some(role => staffRoles.includes(role.id))) {
                     const errorEmbed = new EmbedBuilder()
                         .setColor(0xED4245) 
                         .setTitle('✖️ Missing Permissions')
-                        .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1415779033156812891>, <@&1541719797447000084>`);
+                        .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1538228489738653757>, <@&1541719797447000084>`);
                     return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
                 }
 
@@ -225,12 +225,12 @@ client.on('interactionCreate', async interaction => {
 
         // --- PART D: UNCLAIM TICKET ---
         if (interaction.customId === 'unclaim_ticket') {
-            const staffRoles = ['1415779033156812891', '1541719797447000084'];
+            const staffRoles = ['1538228489738653757', '1541719797447000084'];
             if (!interaction.member.roles.cache.some(role => staffRoles.includes(role.id))) {
                 const errorEmbed = new EmbedBuilder()
                     .setColor(0xED4245) 
                     .setTitle('✖️ Missing Permissions')
-                    .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1415779033156812891>, <@&1541719797447000084>`);
+                    .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1538228489738653757>, <@&1541719797447000084>`);
                 return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
             }
 
@@ -243,7 +243,7 @@ client.on('interactionCreate', async interaction => {
 
         // --- PART E: CLOSE TICKET (Opens Modal) ---
         if (interaction.customId === 'close_ticket') {
-            const staffRoles = ['1415779033156812891', '1541719797447000084'];
+            const staffRoles = ['1538228489738653757', '1541719797447000084'];
             const isStaff = interaction.member.roles.cache.some(role => staffRoles.includes(role.id));
             const userName = interaction.user.username.toLowerCase();
             const isCreator = interaction.channel.name.includes(userName);
@@ -252,7 +252,7 @@ client.on('interactionCreate', async interaction => {
                 const errorEmbed = new EmbedBuilder()
                     .setColor(0xED4245)
                     .setTitle('✖️ Missing Permissions')
-                    .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1415779033156812891>, <@&1541719797447000084>`);
+                    .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1538228489738653757>, <@&1541719797447000084>`);
                 return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
             }
 

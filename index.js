@@ -77,8 +77,8 @@ client.once('ready', async () => {
 client.on('messageCreate', async message => {
     if (message.author.bot) return; // Ignore bots
 
-    const staffRoles = ['1415779033156812891', '1507415051081089108'];
-    // Agar message bhejne wala Mod hai, toh Firebase mein message count badhao
+    // Updated with new @support_team role ID
+    const staffRoles = ['1415779033156812891', '1541719797447000084'];
     if (message.member && message.member.roles.cache.some(role => staffRoles.includes(role.id))) {
         await updateModStats(message.author.id, message.author.username, 'messagesSent');
     }
@@ -94,7 +94,7 @@ client.on('interactionCreate', async interaction => {
             const ticketEmbed = new EmbedBuilder()
                 .setColor(0x3498DB)
                 .setDescription("**🎯 Create a ticket below and our team will assist you 👇**\n\n🎟️ Support Ticket\n\n(Account problems, payouts, rule questions, claim your giveaway reward, giveaway-related queries)")
-                .setFooter({ text: 'Night Trader Support', iconURL: client.user.displayAvatarURL() });
+                .setFooter({ text: 'Tickety | Tickety.top', iconURL: client.user.displayAvatarURL() });
 
             const ticketButton = new ButtonBuilder()
                 .setCustomId('open_ticket_issue')
@@ -110,14 +110,15 @@ client.on('interactionCreate', async interaction => {
 
         // --- NEW COMMAND: /modstats ---
         if (interaction.commandName === 'modstats') {
-            const staffRoles = ['1415779033156812891', '1507415051081089108'];
+            // Updated with new @support_team role ID
+            const staffRoles = ['1415779033156812891', '1541719797447000084'];
             const isStaff = interaction.member.roles.cache.some(role => staffRoles.includes(role.id));
             
             if (!isStaff) {
                 return interaction.reply({ content: '❌ Only Staff can view the leaderboard.', ephemeral: true });
             }
 
-            await interaction.deferReply(); // It might take a second to fetch from DB
+            await interaction.deferReply(); 
 
             try {
                 const snapshot = await db.collection('nt_mod_stats').get();
@@ -130,7 +131,6 @@ client.on('interactionCreate', async interaction => {
                     statsArray.push({ id: doc.id, ...doc.data() });
                 });
 
-                // Sort by tickets closed primarily, then claimed, then messages
                 statsArray.sort((a, b) => (b.ticketsClosed || 0) - (a.ticketsClosed || 0));
 
                 let leaderboardText = '';
@@ -143,7 +143,7 @@ client.on('interactionCreate', async interaction => {
                 });
 
                 const statsEmbed = new EmbedBuilder()
-                    .setTitle('📊 Moderator Leaderboard')
+                    .setTitle('📊 Support Team Leaderboard')
                     .setDescription(leaderboardText)
                     .setColor(0xF1C40F)
                     .setFooter({ text: 'Night Trader Stats System' });
@@ -187,7 +187,8 @@ client.on('interactionCreate', async interaction => {
                 const claimBtn = new ButtonBuilder().setCustomId('claim_ticket').setLabel('Claim').setEmoji('🙌').setStyle(ButtonStyle.Secondary);
                 const ticketActionRow = new ActionRowBuilder().addComponents(closeBtn, claimBtn);
 
-                const pingMessage = `<@${interaction.user.id}>, <@&1415779033156812891>, <@&1507415051081089108>`;
+                // Ping message updated with new @support_team role ID
+                const pingMessage = `<@${interaction.user.id}>, <@&1415779033156812891>, <@&1541719797447000084>`;
                 const sentMessage = await ticketChannel.send({ content: pingMessage, embeds: [welcomeEmbed], components: [ticketActionRow] });
                 await sentMessage.pin();
 
@@ -202,9 +203,14 @@ client.on('interactionCreate', async interaction => {
         // --- PART C: CLAIM TICKET ---
         if (interaction.customId === 'claim_ticket') {
             try {
-                const staffRoles = ['1415779033156812891', '1507415051081089108'];
+                // Updated with new @support_team role ID
+                const staffRoles = ['1415779033156812891', '1541719797447000084'];
                 if (!interaction.member.roles.cache.some(role => staffRoles.includes(role.id))) {
-                    return interaction.reply({ content: '✖️ Missing Permissions', ephemeral: true });
+                    const errorEmbed = new EmbedBuilder()
+                        .setColor(0xED4245) 
+                        .setTitle('✖️ Missing Permissions')
+                        .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1415779033156812891>, <@&1541719797447000084>`);
+                    return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
                 }
 
                 const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('Close').setEmoji('🔒').setStyle(ButtonStyle.Secondary);
@@ -224,6 +230,16 @@ client.on('interactionCreate', async interaction => {
 
         // --- PART D: UNCLAIM TICKET ---
         if (interaction.customId === 'unclaim_ticket') {
+            // Updated with new @support_team role ID
+            const staffRoles = ['1415779033156812891', '1541719797447000084'];
+            if (!interaction.member.roles.cache.some(role => staffRoles.includes(role.id))) {
+                const errorEmbed = new EmbedBuilder()
+                    .setColor(0xED4245) 
+                    .setTitle('✖️ Missing Permissions')
+                    .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1415779033156812891>, <@&1541719797447000084>`);
+                return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+            }
+
             const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('Close').setEmoji('🔒').setStyle(ButtonStyle.Secondary);
             const claimBtn = new ButtonBuilder().setCustomId('claim_ticket').setLabel('Claim').setEmoji('🙌').setStyle(ButtonStyle.Secondary);
             const originalRow = new ActionRowBuilder().addComponents(closeBtn, claimBtn);
@@ -233,6 +249,20 @@ client.on('interactionCreate', async interaction => {
 
         // --- PART E: CLOSE TICKET (Opens Modal) ---
         if (interaction.customId === 'close_ticket') {
+            // Updated with new @support_team role ID
+            const staffRoles = ['1415779033156812891', '1541719797447000084'];
+            const isStaff = interaction.member.roles.cache.some(role => staffRoles.includes(role.id));
+            const userName = interaction.user.username.toLowerCase();
+            const isCreator = interaction.channel.name.includes(userName);
+
+            if (!isStaff && !isCreator) {
+                const errorEmbed = new EmbedBuilder()
+                    .setColor(0xED4245)
+                    .setTitle('✖️ Missing Permissions')
+                    .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1415779033156812891>, <@&1541719797447000084>`);
+                return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+            }
+
             const modal = new ModalBuilder().setCustomId('close_ticket_modal').setTitle(interaction.channel.name); 
             const closeReasonInput = new TextInputBuilder().setCustomId('close_reason_input').setLabel('Close Reason').setStyle(TextInputStyle.Short).setRequired(false); 
             modal.addComponents(new ActionRowBuilder().addComponents(closeReasonInput));

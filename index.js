@@ -77,7 +77,7 @@ client.once('ready', async () => {
 client.on('messageCreate', async message => {
     if (message.author.bot) return;
 
-    const staffRoles = ['1538228489738653757', '1541719797447000084'];
+    const staffRoles = ['1538228489738653757', '1541757452998021170'];
     if (message.member && message.member.roles.cache.some(role => staffRoles.includes(role.id))) {
         await updateModStats(message.author.id, message.author.username, 'messagesSent');
     }
@@ -93,7 +93,7 @@ client.on('interactionCreate', async interaction => {
             const ticketEmbed = new EmbedBuilder()
                 .setColor(0x3498DB)
                 .setDescription("**🎯 Create a ticket below and our team will assist you 👇**\n\n🎟️ Support Ticket\n\n(Account problems, payouts, rule questions, claim your giveaway reward, giveaway-related queries)")
-                .setFooter({ text: 'Night Trader Support', iconURL: client.user.displayAvatarURL() });
+                .setFooter({ text: 'Tickety | Tickety.top', iconURL: client.user.displayAvatarURL() });
 
             const ticketButton = new ButtonBuilder()
                 .setCustomId('open_ticket_issue')
@@ -109,7 +109,7 @@ client.on('interactionCreate', async interaction => {
 
         // --- COMMAND: /modstats ---
         if (interaction.commandName === 'modstats') {
-            const staffRoles = ['1538228489738653757', '1541719797447000084'];
+            const staffRoles = ['1538228489738653757', '1541757452998021170'];
             const isStaff = interaction.member.roles.cache.some(role => staffRoles.includes(role.id));
             
             if (!isStaff) {
@@ -168,6 +168,7 @@ client.on('interactionCreate', async interaction => {
                 const ticketChannel = await interaction.guild.channels.create({
                     name: channelName,
                     type: ChannelType.GuildText,
+                    // DHYAN DEIN: Isko apne naye server ki Category ID se badal lein
                     parent: '1538250489840279653', 
                     permissionOverwrites: [
                         { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
@@ -185,7 +186,7 @@ client.on('interactionCreate', async interaction => {
                 const claimBtn = new ButtonBuilder().setCustomId('claim_ticket').setLabel('Claim').setEmoji('🙌').setStyle(ButtonStyle.Secondary);
                 const ticketActionRow = new ActionRowBuilder().addComponents(closeBtn, claimBtn);
 
-                const pingMessage = `<@${interaction.user.id}>, <@&1538228489738653757>, <@&1541719797447000084>`;
+                const pingMessage = `<@${interaction.user.id}>, <@&1538228489738653757>, <@&1541757452998021170>`;
                 const sentMessage = await ticketChannel.send({ content: pingMessage, embeds: [welcomeEmbed], components: [ticketActionRow] });
                 await sentMessage.pin();
 
@@ -200,12 +201,12 @@ client.on('interactionCreate', async interaction => {
         // --- PART C: CLAIM TICKET ---
         if (interaction.customId === 'claim_ticket') {
             try {
-                const staffRoles = ['1538228489738653757', '1541719797447000084'];
+                const staffRoles = ['1538228489738653757', '1541757452998021170'];
                 if (!interaction.member.roles.cache.some(role => staffRoles.includes(role.id))) {
                     const errorEmbed = new EmbedBuilder()
                         .setColor(0xED4245) 
                         .setTitle('✖️ Missing Permissions')
-                        .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1538228489738653757>, <@&1541719797447000084>`);
+                        .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1538228489738653757>, <@&1541757452998021170>`);
                     return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
                 }
 
@@ -225,12 +226,12 @@ client.on('interactionCreate', async interaction => {
 
         // --- PART D: UNCLAIM TICKET ---
         if (interaction.customId === 'unclaim_ticket') {
-            const staffRoles = ['1538228489738653757', '1541719797447000084'];
+            const staffRoles = ['1538228489738653757', '1541757452998021170'];
             if (!interaction.member.roles.cache.some(role => staffRoles.includes(role.id))) {
                 const errorEmbed = new EmbedBuilder()
                     .setColor(0xED4245) 
                     .setTitle('✖️ Missing Permissions')
-                    .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1538228489738653757>, <@&1541719797447000084>`);
+                    .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1538228489738653757>, <@&1541757452998021170>`);
                 return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
             }
 
@@ -243,7 +244,7 @@ client.on('interactionCreate', async interaction => {
 
         // --- PART E: CLOSE TICKET (Opens Modal) ---
         if (interaction.customId === 'close_ticket') {
-            const staffRoles = ['1538228489738653757', '1541719797447000084'];
+            const staffRoles = ['1538228489738653757', '1541757452998021170'];
             const isStaff = interaction.member.roles.cache.some(role => staffRoles.includes(role.id));
             const userName = interaction.user.username.toLowerCase();
             const isCreator = interaction.channel.name.includes(userName);
@@ -252,7 +253,7 @@ client.on('interactionCreate', async interaction => {
                 const errorEmbed = new EmbedBuilder()
                     .setColor(0xED4245)
                     .setTitle('✖️ Missing Permissions')
-                    .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1538228489738653757>, <@&1541719797447000084>`);
+                    .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1538228489738653757>, <@&1541757452998021170>`);
                 return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
             }
 
@@ -274,7 +275,7 @@ client.on('interactionCreate', async interaction => {
             // 1. ADD TO FIREBASE: TICKET CLOSED
             await updateModStats(interaction.user.id, interaction.user.username, 'ticketsClosed');
 
-            // 2. DM TO CREATOR LOGIC (Restored)
+            // 2. DM TO CREATOR LOGIC (Buttons Removed)
             const creatorUsername = interaction.channel.name.split('-').pop(); 
             const creatorMember = interaction.guild.members.cache.find(m => m.user.username.toLowerCase() === creatorUsername.toLowerCase());
 
@@ -283,38 +284,19 @@ client.on('interactionCreate', async interaction => {
                     .setColor(0x3498DB)
                     .setTitle('Ticket Closed')
                     .setDescription(`Your ticket has been closed in **Night Trader - Propfirm Community!**\n\n**Ticket Information**\n• **Open Date:** <t:${Math.floor(interaction.channel.createdTimestamp / 1000)}:f>\n• **Panel Name:** 1️⃣ Support / Issues\n• **Ticket Name:** ${interaction.channel.name}\n\n**Close Information**\n• **Closed By:** <@${interaction.user.id}>\n• **Close Date:** <t:${Math.floor(Date.now() / 1000)}:f>\n• **Close Reason:** ${finalReason}\n\n*If you have any further questions or concerns, feel free to open a new ticket.*`)
-                    .setFooter({ text: 'Night Trader Support', iconURL: interaction.client.user.displayAvatarURL() });
-
-                const voteBtn = new ButtonBuilder()
-                    .setLabel('Vote for Tickety')
-                    .setURL('https://top.gg/bot/tickety') 
-                    .setEmoji('⚡')
-                    .setStyle(ButtonStyle.Link);
-                    
-                const transcriptBtn = new ButtonBuilder()
-                    .setLabel('View Transcript')
-                    .setURL('https://tickety.top/') 
-                    .setEmoji('📄')
-                    .setStyle(ButtonStyle.Link);
-                    
-                const rateBtn = new ButtonBuilder()
-                    .setLabel('Rate')
-                    .setURL('https://tickety.top/') 
-                    .setEmoji('⭐')
-                    .setStyle(ButtonStyle.Link);
-
-                const dmRow1 = new ActionRowBuilder().addComponents(voteBtn);
-                const dmRow2 = new ActionRowBuilder().addComponents(transcriptBtn, rateBtn);
+                    .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
 
                 try {
-                    await creatorMember.send({ embeds: [dmEmbed], components: [dmRow1, dmRow2] });
+                    // Ab sirf embed jayega, bina kisi buttons ke
+                    await creatorMember.send({ embeds: [dmEmbed] }); 
                 } catch (err) {
                     console.error('User DMs are closed, could not send the DM.');
                 }
             }
 
             // 3. LOGGING TO SERVER
-            const logChannel = interaction.client.channels.cache.get('1538244777001099366');
+            // 👇 DHYAN DEIN: Yahan apne naye '#ticket-logs' wale text channel ki ID daaliye warna ticket delete nahi hogi!
+            const logChannel = interaction.client.channels.cache.get('1504228496577138789'); 
             if (logChannel) {
                 const generateTicketId = () => {
                     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -331,7 +313,7 @@ client.on('interactionCreate', async interaction => {
                         { name: 'Ticket Information', value: `> **Ticket Name:** ${interaction.channel.name}\n> **Ticket ID:** ${generateTicketId()}\n> **Created At:** <t:${Math.floor(interaction.channel.createdTimestamp / 1000)}:F>` },
                         { name: 'Executor Information', value: `> **Executor:** <@${interaction.user.id}>\n> **Executor Username:** @${interaction.user.username}\n> **Executor ID:** ${interaction.user.id}` }
                     )
-                    .setFooter({ text: 'Night Trader Support', iconURL: interaction.client.user.displayAvatarURL() });
+                    .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
 
                 await logChannel.send({ embeds: [logEmbed] });
             }

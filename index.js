@@ -284,7 +284,7 @@ client.on('interactionCreate', async interaction => {
                     .setColor(0x3498DB)
                     .setTitle('Ticket Closed')
                     .setDescription(`Your ticket has been closed in **Night Trader - Propfirm Community!**\n\n**Ticket Information**\n• **Open Date:** <t:${Math.floor(interaction.channel.createdTimestamp / 1000)}:f>\n• **Panel Name:** 1️⃣ Support / Issues\n• **Ticket Name:** ${interaction.channel.name}\n\n**Close Information**\n• **Closed By:** <@${interaction.user.id}>\n• **Close Date:** <t:${Math.floor(Date.now() / 1000)}:f>\n• **Close Reason:** ${finalReason}\n\n*If you have any further questions or concerns, feel free to open a new ticket.*`)
-                    .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
+                    .setFooter({ text: 'Night Trader Support', iconURL: interaction.client.user.displayAvatarURL() });
 
                 try {
                     // Ab sirf embed jayega, bina kisi buttons ke

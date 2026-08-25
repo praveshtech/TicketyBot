@@ -51,7 +51,7 @@ const client = new Client({
 
 // 2. Define Slash Commands
 const supportCommand = new SlashCommandBuilder()
-    .setName('support')
+    .setName('ntsupport')
     .setDescription('Sets up the Tickety support panel.');
 
 const modStatsCommand = new SlashCommandBuilder()
@@ -90,7 +90,7 @@ client.on('interactionCreate', async interaction => {
     
     // --- PART A: SLASH COMMAND LOGIC ---
     if (interaction.isChatInputCommand()) {
-        if (interaction.commandName === 'support') {
+        if (interaction.commandName === 'ntsupport') {
             const ticketEmbed = new EmbedBuilder()
                 .setColor(0x3498DB)
                 .setDescription("**🎯 Create a ticket below and our team will assist you 👇**\n\n🎟️ Support Ticket\n\n(Account problems, payouts, rule questions, claim your giveaway reward, giveaway-related queries)")

@@ -16,30 +16,6 @@ const {
     TextInputStyle
 } = require('discord.js');
 
-// --- FIREBASE SETUP ---
-const admin = require('firebase-admin');
-const serviceAccount = require('./firebase-key.json'); 
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
-const db = admin.firestore();
-
-// Helper Function: Update Mod Stats
-async function updateModStats(userId, username, fieldToIncrement) {
-    const modRef = db.collection('nt_mod_stats').doc(userId);
-    try {
-        const updateData = {};
-        updateData[fieldToIncrement] = admin.firestore.FieldValue.increment(1);
-        updateData['username'] = username; 
-        updateData['lastActive'] = admin.firestore.FieldValue.serverTimestamp();
-        await modRef.set(updateData, { merge: true });
-    } catch (error) {
-        console.error('Error updating Firebase:', error);
-    }
-}
-// ----------------------
-
 // 1. Initialize the Bot Client
 const client = new Client({ 
     intents: [
@@ -49,51 +25,42 @@ const client = new Client({
     ] 
 });
 
-// 2. Define Slash Commands
+// 2. Define the /support Slash Command
 const supportCommand = new SlashCommandBuilder()
-    .setName('ntsupport')
-    .setDescription('Sets up the Night Trader support panel.');
+    .setName('support')
+    .setDescription('Sets up the Tickety support panel in the current channel.');
 
-const modStatsCommand = new SlashCommandBuilder()
-    .setName('modstats')
-    .setDescription('Shows the live leaderboard for moderator activity.');
-
-// 3. Register Commands
+// 3. Register Command when Bot gets Ready
 client.once('ready', async () => {
     console.log(`✅ Ready! Logged in as ${client.user.tag}`);
+    
     const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
     try {
+        console.log('⏳ Registering /support command...');
         await rest.put(
             Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
-            { body: [supportCommand.toJSON(), modStatsCommand.toJSON()] },
+            { body: [supportCommand.toJSON()] },
         );
-        console.log('🎉 Commands registered successfully!');
+        console.log('🎉 Successfully registered /support command!');
     } catch (error) {
-        console.error('❌ Error registering commands:', error);
+        console.error('❌ Error registering command:', error);
     }
 });
-
-// --- MESSAGE TRACKER (Live Chat Activity) ---
-client.on('messageCreate', async message => {
-    if (message.author.bot) return;
-
-    const staffRoles = ['1538228489738653757', '1541757452998021170'];
-    if (message.member && message.member.roles.cache.some(role => staffRoles.includes(role.id))) {
-        await updateModStats(message.author.id, message.author.username, 'messagesSent');
-    }
-});
-// --------------------------------------------
 
 // 4. Handle Interactions
 client.on('interactionCreate', async interaction => {
     
-    // --- PART A: SLASH COMMAND LOGIC ---
+    // --- PART A: SLASH COMMAND LOGIC (/support) ---
     if (interaction.isChatInputCommand()) {
-        if (interaction.commandName === 'ntsupport') {
+        if (interaction.commandName === 'support') {
+            
             const ticketEmbed = new EmbedBuilder()
                 .setColor(0x3498DB)
                 .setDescription("**🎯 Create a ticket below and our team will assist you 👇**\n\n🎟️ Support Ticket\n\n(Account problems, payouts, rule questions, claim your giveaway reward, giveaway-related queries)")
-                .setFooter({ text: 'Night Trader Support', iconURL: client.user.displayAvatarURL() });
+                .setFooter({ 
+                    text: 'Tickety | Tickety.top', 
+                    iconURL: client.user.displayAvatarURL() 
+                });
 
             const ticketButton = new ButtonBuilder()
                 .setCustomId('open_ticket_issue')
@@ -103,54 +70,18 @@ client.on('interactionCreate', async interaction => {
 
             const row = new ActionRowBuilder().addComponents(ticketButton);
 
-            await interaction.reply({ content: '✅ Ticket panel setup successful!', ephemeral: true });
-            await interaction.channel.send({ embeds: [ticketEmbed], components: [row] });
-        }
-
-        // --- COMMAND: /modstats ---
-        if (interaction.commandName === 'modstats') {
-            const staffRoles = ['1538228489738653757', '1541757452998021170'];
-            const isStaff = interaction.member.roles.cache.some(role => staffRoles.includes(role.id));
-            
-            if (!isStaff) {
-                return interaction.reply({ content: '❌ Only Staff can view the leaderboard.', ephemeral: true });
-            }
-
-            await interaction.deferReply(); 
-
             try {
-                const snapshot = await db.collection('nt_mod_stats').get();
-                if (snapshot.empty) {
-                    return interaction.editReply('No moderator stats recorded yet.');
-                }
-
-                let statsArray = [];
-                snapshot.forEach(doc => {
-                    statsArray.push({ id: doc.id, ...doc.data() });
+                await interaction.reply({ 
+                    content: '✅ Ticket panel setup successful!', 
+                    ephemeral: true 
                 });
 
-                statsArray.sort((a, b) => (b.ticketsClosed || 0) - (a.ticketsClosed || 0));
-
-                let leaderboardText = '';
-                statsArray.forEach((stat, index) => {
-                    const rank = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🔹';
-                    const closed = stat.ticketsClosed || 0;
-                    const claimed = stat.ticketsClaimed || 0;
-                    const msgs = stat.messagesSent || 0;
-                    leaderboardText += `${rank} **${stat.username}**\n> 🔒 Closed: \`${closed}\` | 🙌 Claimed: \`${claimed}\` | 💬 Msgs: \`${msgs}\`\n\n`;
+                await interaction.channel.send({ 
+                    embeds: [ticketEmbed], 
+                    components: [row] 
                 });
-
-                const statsEmbed = new EmbedBuilder()
-                    .setTitle('📊 Support Team Leaderboard')
-                    .setDescription(leaderboardText)
-                    .setColor(0xF1C40F)
-                    .setFooter({ text: 'Night Trader Stats System' });
-
-                await interaction.editReply({ embeds: [statsEmbed] });
-
             } catch (error) {
-                console.error('Error fetching stats:', error);
-                await interaction.editReply('❌ Failed to fetch stats from database.');
+                console.error('Error sending panel:', error);
             }
         }
     }
@@ -160,171 +91,356 @@ client.on('interactionCreate', async interaction => {
         
        // --- PART B: CREATE TICKET ---
         if (interaction.customId === 'open_ticket_issue') {
-            await interaction.reply({ content: '⏳ Creating your ticket...', ephemeral: true });
+            await interaction.reply({ 
+                content: '⏳ Creating your ticket... please wait!', 
+                ephemeral: true 
+            });
+
             const userName = interaction.user.username.toLowerCase();
             const channelName = `1️⃣-support--issues-${userName}`;
+            
+            // 🛑 GAGAN AUR NISHANT KI IDs (7-second sniper delay)
+            const gaganUserId = '1048219994011484220'; 
+            const nishantUserId = '1214480457098596372'; // Nishant ki ID add kar di
 
             try {
                 const ticketChannel = await interaction.guild.channels.create({
                     name: channelName,
                     type: ChannelType.GuildText,
-                    // DHYAN DEIN: Isko apne naye server ki Category ID se badal lein
-                    parent: '1538250489840279653', 
+                    // 🛑 CATEGORY ID
+                    parent: '1504229014540124180', 
                     permissionOverwrites: [
-                        { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
-                        { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory] },
-                        { id: interaction.client.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ManageChannels, PermissionsBitField.Flags.ManageMessages] }
+                        {
+                            id: interaction.guild.id, 
+                            deny: [PermissionsBitField.Flags.ViewChannel], 
+                        },
+                        {
+                            id: interaction.user.id, 
+                            allow: [
+                                PermissionsBitField.Flags.ViewChannel, 
+                                PermissionsBitField.Flags.SendMessages, 
+                                PermissionsBitField.Flags.ReadMessageHistory
+                            ],
+                        },
+                        {
+                            id: interaction.client.user.id, 
+                            allow: [
+                                PermissionsBitField.Flags.ViewChannel, 
+                                PermissionsBitField.Flags.SendMessages, 
+                                PermissionsBitField.Flags.ManageChannels,
+                                PermissionsBitField.Flags.ManageMessages 
+                            ],
+                        },
+                        // Gagan's 7-second block
+                        {
+                            id: gaganUserId,
+                            deny: [PermissionsBitField.Flags.ViewChannel],
+                        },
+                        // Nishant's 7-second block
+                        {
+                            id: nishantUserId,
+                            deny: [PermissionsBitField.Flags.ViewChannel],
+                        }
                     ]
                 });
 
                 const welcomeEmbed = new EmbedBuilder()
                     .setTitle('Ticket Created')
-                    .setDescription(`Welcome <@${interaction.user.id}>, thank you for reaching out to our support team!\nPlease describe your concern.`)
-                    .setColor(0x3498DB);
+                    .setDescription(`Welcome <@${interaction.user.id}>, thank you for reaching out to our support team!\nPlease describe your concern and we will get back to you as soon as possible.`)
+                    .setColor(0x3498DB)
+                    .setFooter({ 
+                        text: 'Tickety | Tickety.top', 
+                        iconURL: interaction.client.user.displayAvatarURL() 
+                    });
 
-                const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('Close').setEmoji('🔒').setStyle(ButtonStyle.Secondary);
-                const claimBtn = new ButtonBuilder().setCustomId('claim_ticket').setLabel('Claim').setEmoji('🙌').setStyle(ButtonStyle.Secondary);
+                const closeBtn = new ButtonBuilder()
+                    .setCustomId('close_ticket')
+                    .setLabel('Close')
+                    .setEmoji('🔒')
+                    .setStyle(ButtonStyle.Secondary);
+
+                const claimBtn = new ButtonBuilder()
+                    .setCustomId('claim_ticket')
+                    .setLabel('Claim')
+                    .setEmoji('🙌')
+                    .setStyle(ButtonStyle.Secondary);
+
                 const ticketActionRow = new ActionRowBuilder().addComponents(closeBtn, claimBtn);
 
-                const pingMessage = `<@${interaction.user.id}>, <@&1538228489738653757>, <@&1541757452998021170>`;
-                const sentMessage = await ticketChannel.send({ content: pingMessage, embeds: [welcomeEmbed], components: [ticketActionRow] });
+                // 🛑 STAFF ROLES ID
+                const communityManagerRoleId = '1415779033156812891'; 
+                const ntCommanderRoleId = '1507415051081089108';      
+
+                const pingMessage = `<@${interaction.user.id}>, <@&${communityManagerRoleId}>, <@&${ntCommanderRoleId}>`;
+
+                const sentMessage = await ticketChannel.send({
+                    content: pingMessage,
+                    embeds: [welcomeEmbed],
+                    components: [ticketActionRow]
+                });
+
                 await sentMessage.pin();
 
-                await interaction.editReply({ content: `✅ Your ticket has been created here: ${ticketChannel}` });
+                // 7 Second Delay Logic for Gagan AND Nishant
+                setTimeout(async () => {
+                    try {
+                        const channelExists = interaction.guild.channels.cache.get(ticketChannel.id);
+                        if (channelExists) {
+                            // Gagan ko permission do
+                            await channelExists.permissionOverwrites.edit(gaganUserId, {
+                                ViewChannel: true,
+                                SendMessages: true,
+                                ReadMessageHistory: true
+                            });
+                            // Nishant ko permission do
+                            await channelExists.permissionOverwrites.edit(nishantUserId, {
+                                ViewChannel: true,
+                                SendMessages: true,
+                                ReadMessageHistory: true
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error removing delay for delayed users:', error);
+                    }
+                }, 7000); 
+
+                await interaction.editReply({ 
+                    content: `✅ Your ticket has been created here: ${ticketChannel}`, 
+                });
 
             } catch (error) {
-                console.error(error);
-                await interaction.editReply({ content: '❌ Error creating the ticket.' });
+                console.error('Error creating ticket:', error);
+                await interaction.editReply({ 
+                    content: '❌ There was an error creating the ticket. Make sure all IDs are correct numbers and bot has permissions!' 
+                });
             }
         }
 
         // --- PART C: CLAIM TICKET ---
         if (interaction.customId === 'claim_ticket') {
             try {
-                const staffRoles = ['1538228489738653757', '1541757452998021170'];
-                if (!interaction.member.roles.cache.some(role => staffRoles.includes(role.id))) {
+                // 🛑 STAFF ROLES ID
+                const staffRoles = ['1415779033156812891', '1507415051081089108'];
+                const hasPermission = interaction.member.roles.cache.some(role => staffRoles.includes(role.id));
+
+                if (!hasPermission) {
                     const errorEmbed = new EmbedBuilder()
                         .setColor(0xED4245) 
                         .setTitle('✖️ Missing Permissions')
-                        .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1538228489738653757>, <@&1541757452998021170>`);
+                        .setDescription(`You need one of the following to access this feature:\n• **Admin Role:** <@&1507415051081089108>\n• **Panel Support Roles:** <@&1415779033156812891>, <@&1507415051081089108>\n• **Permissions:** Manage Channels`);
+
                     return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
                 }
 
-                const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('Close').setEmoji('🔒').setStyle(ButtonStyle.Secondary);
-                const unclaimBtn = new ButtonBuilder().setCustomId('unclaim_ticket').setLabel('Unclaim').setEmoji('🙌').setStyle(ButtonStyle.Secondary);
+                const closeBtn = new ButtonBuilder()
+                    .setCustomId('close_ticket')
+                    .setLabel('Close')
+                    .setEmoji('🔒')
+                    .setStyle(ButtonStyle.Secondary);
+
+                const unclaimBtn = new ButtonBuilder()
+                    .setCustomId('unclaim_ticket') 
+                    .setLabel('Unclaim')
+                    .setEmoji('🙌')
+                    .setStyle(ButtonStyle.Secondary);
+
                 const updatedRow = new ActionRowBuilder().addComponents(closeBtn, unclaimBtn);
 
                 await interaction.update({ components: [updatedRow] });
-                await interaction.channel.send({ content: `<@${interaction.user.id}> claimed this ticket.` });
 
-                await updateModStats(interaction.user.id, interaction.user.username, 'ticketsClaimed');
+                const claimEmbed = new EmbedBuilder()
+                    .setColor(0x2B2D31) 
+                    .setDescription(`<@${interaction.user.id}> claimed this ticket.`);
+
+                await interaction.channel.send({ embeds: [claimEmbed] });
 
             } catch (error) {
-                console.error(error);
+                console.error('Error claiming ticket:', error);
             }
         }
 
         // --- PART D: UNCLAIM TICKET ---
         if (interaction.customId === 'unclaim_ticket') {
-            const staffRoles = ['1538228489738653757', '1541757452998021170'];
-            if (!interaction.member.roles.cache.some(role => staffRoles.includes(role.id))) {
-                const errorEmbed = new EmbedBuilder()
-                    .setColor(0xED4245) 
-                    .setTitle('✖️ Missing Permissions')
-                    .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1538228489738653757>, <@&1541757452998021170>`);
-                return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
-            }
+            try {
+                // 🛑 STAFF ROLES ID
+                const staffRoles = ['1415779033156812891', '1507415051081089108'];
+                const hasPermission = interaction.member.roles.cache.some(role => staffRoles.includes(role.id));
 
-            const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('Close').setEmoji('🔒').setStyle(ButtonStyle.Secondary);
-            const claimBtn = new ButtonBuilder().setCustomId('claim_ticket').setLabel('Claim').setEmoji('🙌').setStyle(ButtonStyle.Secondary);
-            const originalRow = new ActionRowBuilder().addComponents(closeBtn, claimBtn);
-            await interaction.update({ components: [originalRow] });
-            await interaction.channel.send({ content: `<@${interaction.user.id}> unclaimed this ticket.` });
+                if (!hasPermission) {
+                    const errorEmbed = new EmbedBuilder()
+                        .setColor(0xED4245) 
+                        .setTitle('✖️ Missing Permissions')
+                        .setDescription(`You need one of the following to access this feature:\n• **Admin Role:** <@&1507415051081089108>\n• **Panel Support Roles:** <@&1415779033156812891>, <@&1507415051081089108>\n• **Permissions:** Manage Channels`);
+
+                    return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                }
+
+                const closeBtn = new ButtonBuilder()
+                    .setCustomId('close_ticket')
+                    .setLabel('Close')
+                    .setEmoji('🔒')
+                    .setStyle(ButtonStyle.Secondary);
+
+                const claimBtn = new ButtonBuilder()
+                    .setCustomId('claim_ticket') 
+                    .setLabel('Claim')
+                    .setEmoji('🙌')
+                    .setStyle(ButtonStyle.Secondary);
+
+                const originalRow = new ActionRowBuilder().addComponents(closeBtn, claimBtn);
+
+                await interaction.update({ components: [originalRow] });
+
+                const unclaimEmbed = new EmbedBuilder()
+                    .setColor(0x2B2D31)
+                    .setDescription(`<@${interaction.user.id}> unclaimed this ticket.`);
+
+                await interaction.channel.send({ embeds: [unclaimEmbed] });
+
+            } catch (error) {
+                console.error('Error unclaiming ticket:', error);
+            }
         }
 
         // --- PART E: CLOSE TICKET (Opens Modal) ---
         if (interaction.customId === 'close_ticket') {
-            const staffRoles = ['1538228489738653757', '1541757452998021170'];
-            const isStaff = interaction.member.roles.cache.some(role => staffRoles.includes(role.id));
-            const userName = interaction.user.username.toLowerCase();
-            const isCreator = interaction.channel.name.includes(userName);
+            try {
+                // 🛑 STAFF ROLES ID
+                const staffRoles = ['1415779033156812891', '1507415051081089108'];
+                const isStaff = interaction.member.roles.cache.some(role => staffRoles.includes(role.id));
+                const userName = interaction.user.username.toLowerCase();
+                const isCreator = interaction.channel.name.includes(userName);
 
-            if (!isStaff && !isCreator) {
-                const errorEmbed = new EmbedBuilder()
-                    .setColor(0xED4245)
-                    .setTitle('✖️ Missing Permissions')
-                    .setDescription(`You need one of the following to access this feature:\n• **Support Roles:** <@&1538228489738653757>, <@&1541757452998021170>`);
-                return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                if (!isStaff && !isCreator) {
+                    const errorEmbed = new EmbedBuilder()
+                        .setColor(0xED4245)
+                        .setTitle('✖️ Missing Permissions')
+                        .setDescription(`You need one of the following to access this feature:\n• **Admin Role:** <@&1507415051081089108>\n• **Panel Support Roles:** <@&1415779033156812891>, <@&1507415051081089108>\n• **Permissions:** Manage Channels`);
+
+                    return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                }
+
+                const modal = new ModalBuilder()
+                    .setCustomId('close_ticket_modal')
+                    .setTitle(interaction.channel.name); 
+
+                const closeReasonInput = new TextInputBuilder()
+                    .setCustomId('close_reason_input')
+                    .setLabel('Close Reason')
+                    .setPlaceholder('Are you sure that you want to close this ticket?')
+                    .setStyle(TextInputStyle.Short) 
+                    .setRequired(false); 
+
+                const firstActionRow = new ActionRowBuilder().addComponents(closeReasonInput);
+                modal.addComponents(firstActionRow);
+
+                await interaction.showModal(modal);
+
+            } catch (error) {
+                console.error('Error opening close modal:', error);
             }
-
-            const modal = new ModalBuilder().setCustomId('close_ticket_modal').setTitle(interaction.channel.name); 
-            const closeReasonInput = new TextInputBuilder().setCustomId('close_reason_input').setLabel('Close Reason').setStyle(TextInputStyle.Short).setRequired(false); 
-            modal.addComponents(new ActionRowBuilder().addComponents(closeReasonInput));
-            await interaction.showModal(modal);
         }
     }
 
     // --- PART F: MODAL SUBMIT LOGIC ---
-    if (interaction.isModalSubmit() && interaction.customId === 'close_ticket_modal') {
-        try {
-            const reason = interaction.fields.getTextInputValue('close_reason_input');
-            const finalReason = reason ? reason : 'No further action required.';
+    if (interaction.isModalSubmit()) {
+        if (interaction.customId === 'close_ticket_modal') {
+            try {
+                const reason = interaction.fields.getTextInputValue('close_reason_input');
+                const finalReason = reason ? reason : 'No further action required.';
 
-            await interaction.reply({ content: `🔒 Closed by <@${interaction.user.id}>.\n**Reason:** ${finalReason}\n\n*Deleting in 5 seconds...*` });
+                // Notify in channel
+                await interaction.reply({ 
+                    content: `🔒 This ticket has been closed by <@${interaction.user.id}>.\n**Reason:** ${finalReason}\n\n*The channel will be deleted in 5 seconds...*`
+                });
 
-            // 1. ADD TO FIREBASE: TICKET CLOSED
-            await updateModStats(interaction.user.id, interaction.user.username, 'ticketsClosed');
+                // --- DM TO CREATOR LOGIC ---
+                const creatorUsername = interaction.channel.name.split('-').pop(); 
+                const creatorMember = interaction.guild.members.cache.find(m => m.user.username.toLowerCase() === creatorUsername.toLowerCase());
 
-            // 2. DM TO CREATOR LOGIC (Buttons Removed)
-            const creatorUsername = interaction.channel.name.split('-').pop(); 
-            const creatorMember = interaction.guild.members.cache.find(m => m.user.username.toLowerCase() === creatorUsername.toLowerCase());
+                if (creatorMember) {
+                    const dmEmbed = new EmbedBuilder()
+                        .setColor(0x3498DB)
+                        .setTitle('Ticket Closed')
+                        .setDescription(`Your ticket has been closed in **Night Trader - Propfirm Community!**\n\n**Ticket Information**\n• **Open Date:** <t:${Math.floor(interaction.channel.createdTimestamp / 1000)}:f>\n• **Panel Name:** 1️⃣ Support / Issues\n• **Ticket Name:** ${interaction.channel.name}\n\n**Close Information**\n• **Closed By:** <@${interaction.user.id}>\n• **Close Date:** <t:${Math.floor(Date.now() / 1000)}:f>\n• **Close Reason:** ${finalReason}\n\n*If you have any further questions or concerns, feel free to open a new ticket.*`)
+                        .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
 
-            if (creatorMember) {
-                const dmEmbed = new EmbedBuilder()
-                    .setColor(0x3498DB)
-                    .setTitle('Ticket Closed')
-                    .setDescription(`Your ticket has been closed in **Night Trader - Propfirm Community!**\n\n**Ticket Information**\n• **Open Date:** <t:${Math.floor(interaction.channel.createdTimestamp / 1000)}:f>\n• **Panel Name:** 1️⃣ Support / Issues\n• **Ticket Name:** ${interaction.channel.name}\n\n**Close Information**\n• **Closed By:** <@${interaction.user.id}>\n• **Close Date:** <t:${Math.floor(Date.now() / 1000)}:f>\n• **Close Reason:** ${finalReason}\n\n*If you have any further questions or concerns, feel free to open a new ticket.*`)
-                    .setFooter({ text: 'Night Trader Support', iconURL: interaction.client.user.displayAvatarURL() });
+                    const voteBtn = new ButtonBuilder()
+                        .setLabel('Vote for Tickety')
+                        .setURL('https://top.gg/bot/tickety') 
+                        .setEmoji('⚡')
+                        .setStyle(ButtonStyle.Link);
+                        
+                    const transcriptBtn = new ButtonBuilder()
+                        .setLabel('View Transcript')
+                        .setURL('https://tickety.top/') 
+                        .setEmoji('📄')
+                        .setStyle(ButtonStyle.Link);
+                        
+                    const rateBtn = new ButtonBuilder()
+                        .setLabel('Rate')
+                        .setURL('https://tickety.top/') 
+                        .setEmoji('⭐')
+                        .setStyle(ButtonStyle.Link);
 
-                try {
-                    // Ab sirf embed jayega, bina kisi buttons ke
-                    await creatorMember.send({ embeds: [dmEmbed] }); 
-                } catch (err) {
-                    console.error('User DMs are closed, could not send the DM.');
+                    const dmRow1 = new ActionRowBuilder().addComponents(voteBtn);
+                    const dmRow2 = new ActionRowBuilder().addComponents(transcriptBtn, rateBtn);
+
+                    try {
+                        await creatorMember.send({ embeds: [dmEmbed], components: [dmRow1, dmRow2] });
+                    } catch (err) {
+                        console.error('User DMs are closed, could not send the message.');
+                    }
                 }
+
+                // --- TICKET LOGGING LOGIC ---
+                // 🛑 LOG CHANNEL ID
+                const logChannelId = '1504228496577138789'; 
+                const logChannel = interaction.client.channels.cache.get(logChannelId);
+
+                if (logChannel) {
+                    const generateTicketId = () => {
+                        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                        let result = '';
+                        for (let i = 0; i < 19; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+                        return result;
+                    };
+
+                    const logEmbed = new EmbedBuilder()
+                        .setColor(0x3498DB) 
+                        .setTitle('Ticket Closed')
+                        .setDescription(`<@${interaction.user.id}> closed a ticket.\n**Reason:** ${finalReason}`)
+                        .addFields(
+                            {
+                                name: 'Ticket Information',
+                                value: `> **Ticket Name:** ${interaction.channel.name}\n> **Ticket ID:** ${generateTicketId()}\n> **Created At:** <t:${Math.floor(interaction.channel.createdTimestamp / 1000)}:F>`
+                            },
+                            {
+                                name: 'Executor Information',
+                                value: `> **Executor:** <@${interaction.user.id}>\n> **Executor Username:** @${interaction.user.username}\n> **Executor ID:** ${interaction.user.id}`
+                            }
+                        )
+                        .setFooter({ 
+                            text: 'Tickety | Tickety.top', 
+                            iconURL: interaction.client.user.displayAvatarURL() 
+                        });
+
+                    await logChannel.send({ embeds: [logEmbed] });
+                } else {
+                    console.error('Log channel not found! Make sure the ID is correct and bot has access to it.');
+                }
+
+                // Delete channel after 5 seconds
+                setTimeout(async () => {
+                    await interaction.channel.delete().catch(error => console.error('Error deleting channel:', error));
+                }, 5000);
+
+            } catch (error) {
+                console.error('Error handling modal submit:', error);
             }
-
-            // 3. LOGGING TO SERVER
-            // 👇 DHYAN DEIN: Yahan apne naye '#ticket-logs' wale text channel ki ID daaliye warna ticket delete nahi hogi!
-            const logChannel = interaction.client.channels.cache.get('1538244777001099366'); 
-            if (logChannel) {
-                const generateTicketId = () => {
-                    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-                    let result = '';
-                    for (let i = 0; i < 19; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-                    return result;
-                };
-
-                const logEmbed = new EmbedBuilder()
-                    .setColor(0x3498DB)
-                    .setTitle('Ticket Closed')
-                    .setDescription(`Closed by <@${interaction.user.id}>\n**Reason:** ${finalReason}`)
-                    .addFields(
-                        { name: 'Ticket Information', value: `> **Ticket Name:** ${interaction.channel.name}\n> **Ticket ID:** ${generateTicketId()}\n> **Created At:** <t:${Math.floor(interaction.channel.createdTimestamp / 1000)}:F>` },
-                        { name: 'Executor Information', value: `> **Executor:** <@${interaction.user.id}>\n> **Executor Username:** @${interaction.user.username}\n> **Executor ID:** ${interaction.user.id}` }
-                    )
-                    .setFooter({ text: 'Night Trader Support', iconURL: interaction.client.user.displayAvatarURL() });
-
-                await logChannel.send({ embeds: [logEmbed] });
-            }
-
-            // 4. DELETE CHANNEL
-            setTimeout(async () => await interaction.channel.delete().catch(console.error), 5000);
-
-        } catch (error) {
-            console.error('Error handling modal submit:', error);
         }
     }
 });
 
+// 5. Login to Discord
 client.login(process.env.TOKEN);

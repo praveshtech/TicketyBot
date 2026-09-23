@@ -131,14 +131,16 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ManageMessages 
                             ],
                         },
-                        // Gagan's 7-second block
+                        // Gagan's 7-second block (FIXED)
                         {
                             id: gaganUserId,
+                            type: 1, // 👈 Ye batata hai ki ye User ki ID hai
                             deny: [PermissionsBitField.Flags.ViewChannel],
                         },
-                        // Nishant's 7-second block
+                        // Nishant's 7-second block (FIXED)
                         {
                             id: nishantUserId,
+                            type: 1, // 👈 Ye batata hai ki ye User ki ID hai
                             deny: [PermissionsBitField.Flags.ViewChannel],
                         }
                     ]

@@ -188,23 +188,24 @@ client.on('interactionCreate', async interaction => {
                     try {
                         const channelExists = interaction.guild.channels.cache.get(ticketChannel.id);
                         if (channelExists) {
-                            // Gagan ko permission do
-                            await channelExists.permissionOverwrites.edit(gaganUserId, {
+                            // Gagan ko permission do (Using .create with type: 1 handles raw IDs safely)
+                            await channelExists.permissionOverwrites.create(gaganUserId, {
                                 ViewChannel: true,
                                 SendMessages: true,
                                 ReadMessageHistory: true
-                            });
+                            }, { type: 1 }); // 👈 Ye batata hai ki id ek User ki hai
+
                             // Nishant ko permission do
-                            await channelExists.permissionOverwrites.edit(nishantUserId, {
+                            await channelExists.permissionOverwrites.create(nishantUserId, {
                                 ViewChannel: true,
                                 SendMessages: true,
                                 ReadMessageHistory: true
-                            });
+                            }, { type: 1 }); // 👈 Ye batata hai ki id ek User ki hai
                         }
                     } catch (error) {
                         console.error('Error removing delay for delayed users:', error);
                     }
-                }, 7000); 
+                }, 7000);
 
                 await interaction.editReply({ 
                     content: `✅ Your ticket has been created here: ${ticketChannel}`, 

@@ -97,7 +97,7 @@ client.on('interactionCreate', async interaction => {
             });
 
             const userName = interaction.user.username.toLowerCase();
-            const channelName = `1️⃣-support--issues-${userName}`;
+            const channelName = `1️⃣-support---issues-${userName}`;
             
             // 🛑 GAGAN AUR NISHANT KI IDs (7-second sniper delay)
             const gaganUserId = '1048219994011484220'; 

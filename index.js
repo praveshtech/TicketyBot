@@ -97,7 +97,7 @@ client.on('interactionCreate', async interaction => {
             });
 
             const userName = interaction.user.username.toLowerCase();
-            const channelName = `1️⃣-support---issues-${userName}`;
+            const channelName = `1️⃣-support--issues-${userName}`;
             
             // 🛑 GAGAN AUR NISHANT KI IDs (7-second sniper delay)
             const gaganUserId = '1048219994011484220'; 
@@ -110,10 +110,12 @@ client.on('interactionCreate', async interaction => {
                     // 🛑 CATEGORY ID
                     parent: '1504229014540124180', 
                     permissionOverwrites: [
+                        // 1. Everyone ko hide karo
                         {
                             id: interaction.guild.id, 
                             deny: [PermissionsBitField.Flags.ViewChannel], 
                         },
+                        // 2. Ticket banane wale (User) ko allow karo
                         {
                             id: interaction.user.id, 
                             allow: [
@@ -122,6 +124,7 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ReadMessageHistory
                             ],
                         },
+                        // 3. Bot ko allow karo
                         {
                             id: interaction.client.user.id, 
                             allow: [
@@ -131,16 +134,36 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ManageMessages 
                             ],
                         },
-                        // Gagan's 7-second block (FIXED)
+                        // 4. Community Manager Role ko allow karo (NEW)
+                        {
+                            id: '1415779033156812891',
+                            type: 0, 
+                            allow: [
+                                PermissionsBitField.Flags.ViewChannel, 
+                                PermissionsBitField.Flags.SendMessages, 
+                                PermissionsBitField.Flags.ReadMessageHistory
+                            ],
+                        },
+                        // 5. NT Commander Role ko allow karo (NEW)
+                        {
+                            id: '1507415051081089108',
+                            type: 0, 
+                            allow: [
+                                PermissionsBitField.Flags.ViewChannel, 
+                                PermissionsBitField.Flags.SendMessages, 
+                                PermissionsBitField.Flags.ReadMessageHistory
+                            ],
+                        },
+                        // 6. Gagan's 7-second block
                         {
                             id: gaganUserId,
-                            type: 1, // 👈 Ye batata hai ki ye User ki ID hai
+                            type: 1, 
                             deny: [PermissionsBitField.Flags.ViewChannel],
                         },
-                        // Nishant's 7-second block (FIXED)
+                        // 7. Nishant's 7-second block
                         {
                             id: nishantUserId,
-                            type: 1, // 👈 Ye batata hai ki ye User ki ID hai
+                            type: 1, 
                             deny: [PermissionsBitField.Flags.ViewChannel],
                         }
                     ]

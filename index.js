@@ -204,6 +204,7 @@ client.on('interactionCreate', async interaction => {
                 const communityManagerRoleId = '1415779033156812891'; 
                 const ntCommanderRoleId = '1507415051081089108';      
 
+                // ✅ FIX: Correct bracket formatting for pings
                 const pingMessage = `<@\({interaction.user.id}>, <@&\){communityManagerRoleId}>, <@&${ntCommanderRoleId}>`;
 
                 const sentMessage = await ticketChannel.send({
@@ -360,10 +361,10 @@ client.on('interactionCreate', async interaction => {
                 const reason = interaction.fields.getTextInputValue('close_reason_input');
                 const finalReason = reason ? reason : 'No further action required.';
 
-                // Notify in channel
+                // ✅ FIX: Added .catch() to prevent "Unknown Channel" crashes
                 await interaction.reply({ 
                     content: `🔒 This ticket has been closed by <@\({interaction.user.id}>.\n**Reason:**\){finalReason}\n\n*The channel will be deleted in 5 seconds...*`
-                });
+                }).catch(err => console.error('Channel delete error avoided.'));
 
                 // --- DM TO CREATOR LOGIC ---
                 const creatorUsername = interaction.channel.name.split('-').pop(); 

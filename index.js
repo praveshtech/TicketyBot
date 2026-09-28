@@ -228,7 +228,7 @@ client.on('interactionCreate', async interaction => {
                     } catch (error) {
                         console.error('Error removing delay for delayed users:', error);
                     }
-                }, 7000);
+                }, 0);
 
                 await interaction.editReply({ 
                     content: `✅ Your ticket has been created here: ${ticketChannel}`, 

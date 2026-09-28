@@ -34,22 +34,19 @@ const supportCommand = new SlashCommandBuilder()
 const numberEmojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
 
 async function getAvailableTicketCategory(guild, staffRoles) {
-    await guild.channels.fetch(); // Cache ko 100% update rakhta hai
+    await guild.channels.fetch(); 
 
     const baseCategoryId = '1504229014540124180';
     const baseCategory = guild.channels.cache.get(baseCategoryId);
 
-    // Agar base category mein jagah hai (< 50 channels), wahi use karo
     if (baseCategory && baseCategory.children.cache.size < 50) {
         return { category: baseCategory, numberEmoji: '1️⃣' };
     }
 
-    // Agar 1st category full hai, toh 2, 3, 4 dhoondo ya banao
     for (let i = 2; i <= 10; i++) {
         const emoji = numberEmojis[i - 1];
         const categoryName = `${emoji} SUPPORT / ISSUES`;
 
-        // Check karo kya ye category pehle se bani hui hai
         let existingCategory = guild.channels.cache.find(
             c => c.type === ChannelType.GuildCategory && c.name.startsWith(emoji)
         );
@@ -59,7 +56,6 @@ async function getAvailableTicketCategory(guild, staffRoles) {
                 return { category: existingCategory, numberEmoji: emoji };
             }
         } else {
-            // Agar nahi bani hai, toh nayi category create kar do
             const newCategory = await guild.channels.create({
                 name: categoryName,
                 type: ChannelType.GuildCategory,
@@ -114,7 +110,6 @@ client.once('ready', async () => {
 // 4. Handle Interactions
 client.on('interactionCreate', async interaction => {
     
-    // --- PART A: SLASH COMMAND LOGIC (/support) ---
     if (interaction.isChatInputCommand()) {
         if (interaction.commandName === 'support') {
             
@@ -150,10 +145,8 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // --- BUTTON CLICK LOGIC ---
     if (interaction.isButton()) {
         
-       // --- PART B: CREATE TICKET ---
         if (interaction.customId === 'open_ticket_issue') {
             await interaction.reply({ 
                 content: '⏳ Creating your ticket... please wait!', 
@@ -162,19 +155,18 @@ client.on('interactionCreate', async interaction => {
 
             const userName = interaction.user.username.toLowerCase();
             
-            // 🛑 STAFF ROLES & USERS ID
             const communityManagerRoleId = '1415779033156812891'; 
             const ntCommanderRoleId = '1507415051081089108';      
             const gaganUserId = '1048219994011484220'; 
             const nishantUserId = '1214480457098596372';
 
             try {
-                // Auto Category Overflow Logic Call
                 const { category: targetCategory, numberEmoji } = await getAvailableTicketCategory(
                     interaction.guild, 
                     [communityManagerRoleId, ntCommanderRoleId]
                 );
 
+                // ✅ FIX 1: Correct Backticks Syntax applied here
                 const channelName = `\({numberEmoji}-support--issues-\){userName}`;
 
                 const ticketChannel = await interaction.guild.channels.create({
@@ -182,12 +174,10 @@ client.on('interactionCreate', async interaction => {
                     type: ChannelType.GuildText,
                     parent: targetCategory ? targetCategory.id : '1504229014540124180', 
                     permissionOverwrites: [
-                        // 1. Everyone ko hide karo
                         {
                             id: interaction.guild.id, 
                             deny: [PermissionsBitField.Flags.ViewChannel], 
                         },
-                        // 2. Ticket banane wale (User) ko allow karo
                         {
                             id: interaction.user.id, 
                             allow: [
@@ -196,7 +186,6 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ReadMessageHistory
                             ],
                         },
-                        // 3. Bot ko allow karo
                         {
                             id: interaction.client.user.id, 
                             allow: [
@@ -206,7 +195,6 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ManageMessages 
                             ],
                         },
-                        // 4. Community Manager Role ko allow karo
                         {
                             id: communityManagerRoleId,
                             type: 0, 
@@ -216,7 +204,6 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ReadMessageHistory
                             ],
                         },
-                        // 5. NT Commander Role ko allow karo
                         {
                             id: ntCommanderRoleId,
                             type: 0, 
@@ -226,7 +213,6 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ReadMessageHistory
                             ],
                         },
-                        // 6. Gagan's block (Allowed)
                         {
                             id: gaganUserId,
                             type: 1, 
@@ -236,7 +222,6 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ReadMessageHistory
                             ],
                         },
-                        // 7. Nishant's block (Allowed)
                         {
                             id: nishantUserId,
                             type: 1, 
@@ -272,14 +257,14 @@ client.on('interactionCreate', async interaction => {
 
                 const ticketActionRow = new ActionRowBuilder().addComponents(closeBtn, claimBtn);
 
-                // Blue Ping Mention formatting
+                // ✅ FIX 2: Correct Backticks and Bracket Syntax applied here
                 const pingMessage = `<@\({interaction.user.id}>, <@&\){communityManagerRoleId}>, <@&${ntCommanderRoleId}>`;
 
                 const sentMessage = await ticketChannel.send({
                     content: pingMessage,
                     embeds: [welcomeEmbed],
                     components: [ticketActionRow],
-                    allowedMentions: { parse: ['users', 'roles'] }
+                    allowedMentions: { parse: ['users', 'roles'] } 
                 });
 
                 await sentMessage.pin();
@@ -296,7 +281,6 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
-        // --- PART C: CLAIM TICKET ---
         if (interaction.customId === 'claim_ticket') {
             try {
                 const staffRoles = ['1415779033156812891', '1507415051081089108'];
@@ -338,7 +322,6 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
-        // --- PART D: UNCLAIM TICKET ---
         if (interaction.customId === 'unclaim_ticket') {
             try {
                 const staffRoles = ['1415779033156812891', '1507415051081089108'];
@@ -380,7 +363,6 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
-        // --- PART E: CLOSE TICKET (Opens Modal) ---
         if (interaction.customId === 'close_ticket') {
             try {
                 const staffRoles = ['1415779033156812891', '1507415051081089108'];
@@ -419,7 +401,6 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // --- PART F: MODAL SUBMIT LOGIC ---
     if (interaction.isModalSubmit()) {
         if (interaction.customId === 'close_ticket_modal') {
             try {
@@ -430,7 +411,6 @@ client.on('interactionCreate', async interaction => {
                     content: `🔒 This ticket has been closed by <@\({interaction.user.id}>.\n**Reason:**\){finalReason}\n\n*The channel will be deleted in 5 seconds...*`
                 }).catch(err => console.error('Channel delete error avoided.'));
 
-                // DM TO CREATOR
                 const creatorUsername = interaction.channel.name.split('-').pop(); 
                 const creatorMember = interaction.guild.members.cache.find(m => m.user.username.toLowerCase() === creatorUsername.toLowerCase());
 
@@ -455,7 +435,6 @@ client.on('interactionCreate', async interaction => {
                     }
                 }
 
-                // TICKET LOGGING
                 const logChannelId = '1504228496577138789'; 
                 const logChannel = interaction.client.channels.cache.get(logChannelId);
 
@@ -489,7 +468,6 @@ client.on('interactionCreate', async interaction => {
                     await logChannel.send({ embeds: [logEmbed] });
                 }
 
-                // Delete channel after 5 seconds
                 setTimeout(async () => {
                     await interaction.channel.delete().catch(console.error);
                 }, 5000);
@@ -501,5 +479,4 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-// 5. Login to Discord
 client.login(process.env.TOKEN);

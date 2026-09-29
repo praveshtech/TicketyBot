@@ -99,9 +99,9 @@ client.on('interactionCreate', async interaction => {
             const userName = interaction.user.username.toLowerCase();
             const channelName = `1️⃣-support--issues-${userName}`;
             
-            // 🛑 GAGAN AUR NISHANT KI IDs (7-second sniper delay)
+            // 🛑 GAGAN AUR NISHANT KI IDs
             const gaganUserId = '1048219994011484220'; 
-            const nishantUserId = '1214480457098596372'; // Nishant ki ID add kar di
+            const nishantUserId = '1214480457098596372';
 
             try {
                 const ticketChannel = await interaction.guild.channels.create({
@@ -134,7 +134,7 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ManageMessages 
                             ],
                         },
-                        // 4. Community Manager Role ko allow karo (NEW)
+                        // 4. Community Manager Role ko allow karo
                         {
                             id: '1415779033156812891',
                             type: 0, 
@@ -144,7 +144,7 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ReadMessageHistory
                             ],
                         },
-                        // 5. NT Commander Role ko allow karo (NEW)
+                        // 5. NT Commander Role ko allow karo
                         {
                             id: '1507415051081089108',
                             type: 0, 
@@ -154,17 +154,25 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ReadMessageHistory
                             ],
                         },
-                        // 6. Gagan's 7-second block
+                        // 6. Gagan's block (0 delay - Directly Allowed)
                         {
                             id: gaganUserId,
                             type: 1, 
-                            deny: [PermissionsBitField.Flags.ViewChannel],
+                            allow: [
+                                PermissionsBitField.Flags.ViewChannel, 
+                                PermissionsBitField.Flags.SendMessages, 
+                                PermissionsBitField.Flags.ReadMessageHistory
+                            ],
                         },
-                        // 7. Nishant's 7-second block
+                        // 7. Nishant's block (0 delay - Directly Allowed)
                         {
                             id: nishantUserId,
                             type: 1, 
-                            deny: [PermissionsBitField.Flags.ViewChannel],
+                            allow: [
+                                PermissionsBitField.Flags.ViewChannel, 
+                                PermissionsBitField.Flags.SendMessages, 
+                                PermissionsBitField.Flags.ReadMessageHistory
+                            ],
                         }
                     ]
                 });
@@ -196,7 +204,7 @@ client.on('interactionCreate', async interaction => {
                 const communityManagerRoleId = '1415779033156812891'; 
                 const ntCommanderRoleId = '1507415051081089108';      
 
-                const pingMessage = `<@${interaction.user.id}>, <@&${communityManagerRoleId}>, <@&${ntCommanderRoleId}>`;
+                const pingMessage = `<@\({interaction.user.id}>, <@&\){communityManagerRoleId}>, <@&${ntCommanderRoleId}>`;
 
                 const sentMessage = await ticketChannel.send({
                     content: pingMessage,
@@ -205,30 +213,6 @@ client.on('interactionCreate', async interaction => {
                 });
 
                 await sentMessage.pin();
-
-                // 7 Second Delay Logic for Gagan AND Nishant
-                setTimeout(async () => {
-                    try {
-                        const channelExists = interaction.guild.channels.cache.get(ticketChannel.id);
-                        if (channelExists) {
-                            // Gagan ko permission do (Using .create with type: 1 handles raw IDs safely)
-                            await channelExists.permissionOverwrites.create(gaganUserId, {
-                                ViewChannel: true,
-                                SendMessages: true,
-                                ReadMessageHistory: true
-                            }, { type: 1 }); // 👈 Ye batata hai ki id ek User ki hai
-
-                            // Nishant ko permission do
-                            await channelExists.permissionOverwrites.create(nishantUserId, {
-                                ViewChannel: true,
-                                SendMessages: true,
-                                ReadMessageHistory: true
-                            }, { type: 1 }); // 👈 Ye batata hai ki id ek User ki hai
-                        }
-                    } catch (error) {
-                        console.error('Error removing delay for delayed users:', error);
-                    }
-                }, 0);
 
                 await interaction.editReply({ 
                     content: `✅ Your ticket has been created here: ${ticketChannel}`, 
@@ -377,7 +361,7 @@ client.on('interactionCreate', async interaction => {
 
                 // Notify in channel
                 await interaction.reply({ 
-                    content: `🔒 This ticket has been closed by <@${interaction.user.id}>.\n**Reason:** ${finalReason}\n\n*The channel will be deleted in 5 seconds...*`
+                    content: `🔒 This ticket has been closed by <@\({interaction.user.id}>.\n**Reason:**\){finalReason}\n\n*The channel will be deleted in 5 seconds...*`
                 });
 
                 // --- DM TO CREATOR LOGIC ---
@@ -388,7 +372,7 @@ client.on('interactionCreate', async interaction => {
                     const dmEmbed = new EmbedBuilder()
                         .setColor(0x3498DB)
                         .setTitle('Ticket Closed')
-                        .setDescription(`Your ticket has been closed in **Night Trader - Propfirm Community!**\n\n**Ticket Information**\n• **Open Date:** <t:${Math.floor(interaction.channel.createdTimestamp / 1000)}:f>\n• **Panel Name:** 1️⃣ Support / Issues\n• **Ticket Name:** ${interaction.channel.name}\n\n**Close Information**\n• **Closed By:** <@${interaction.user.id}>\n• **Close Date:** <t:${Math.floor(Date.now() / 1000)}:f>\n• **Close Reason:** ${finalReason}\n\n*If you have any further questions or concerns, feel free to open a new ticket.*`)
+                        .setDescription(`Your ticket has been closed in **Night Trader - Propfirm Community!**\n\n**Ticket Information**\n• **Open Date:** \n• **Panel Name:** 1️⃣ Support / Issues\n• **Ticket Name:** \({interaction.channel.name}\n\n**Close Information**\n• **Closed By:** <@\){interaction.user.id}>\n• **Close Date:** \n• **Close Reason:** ${finalReason}\n\n*If you have any further questions or concerns, feel free to open a new ticket.*`)
                         .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
 
                     const voteBtn = new ButtonBuilder()
@@ -435,15 +419,15 @@ client.on('interactionCreate', async interaction => {
                     const logEmbed = new EmbedBuilder()
                         .setColor(0x3498DB) 
                         .setTitle('Ticket Closed')
-                        .setDescription(`<@${interaction.user.id}> closed a ticket.\n**Reason:** ${finalReason}`)
+                        .setDescription(`<@\({interaction.user.id}> closed a ticket.\n**Reason:**\){finalReason}`)
                         .addFields(
                             {
                                 name: 'Ticket Information',
-                                value: `> **Ticket Name:** ${interaction.channel.name}\n> **Ticket ID:** ${generateTicketId()}\n> **Created At:** <t:${Math.floor(interaction.channel.createdTimestamp / 1000)}:F>`
+                                value: `> **Ticket Name:** \({interaction.channel.name}\n> **Ticket ID:**\){generateTicketId()}\n> **Created At:** `
                             },
                             {
                                 name: 'Executor Information',
-                                value: `> **Executor:** <@${interaction.user.id}>\n> **Executor Username:** @${interaction.user.username}\n> **Executor ID:** ${interaction.user.id}`
+                                value: `> **Executor:** <@${interaction.user.id}>\n> **Executor Username:** @\({interaction.user.username}\n> **Executor ID:**\){interaction.user.id}`
                             }
                         )
                         .setFooter({ 

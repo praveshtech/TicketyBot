@@ -206,7 +206,7 @@ client.on('interactionCreate', async interaction => {
                 const ntCommanderRoleId = '1507415051081089108';      
 
                 // PERFECT TAG SYNTAX ($ EVERYWHERE)
-                const pingMessage = `<@\({interaction.user.id}>, <@&\){communityManagerRoleId}>, <@&${ntCommanderRoleId}>`;
+                const pingMessage = `<@${interaction.user.id}>, <@&${communityManagerRoleId}>, <@&${ntCommanderRoleId}>`;
 
                 const sentMessage = await ticketChannel.send({
                     content: pingMessage,
@@ -233,11 +233,11 @@ client.on('interactionCreate', async interaction => {
                         .addFields(
                             {
                                 name: 'Ticket Information',
-                                value: `**Ticket Name:** \({ticketChannel.name}\n**Ticket ID:**\){generateTicketId()}\n**Created At:** `
+                                value: `**Ticket Name:** ${ticketChannel.name}\n**Ticket ID:** ${generateTicketId()}\n**Created At:** `
                             },
                             {
                                 name: 'Creator Information',
-                                value: `**Creator:** <@\({interaction.user.id}>\n**Creator Username:** @\){interaction.user.username}\n**Creator ID:** ${interaction.user.id}`
+                                value: `**Creator:** <@${interaction.user.id}>\n**Creator Username:** @${interaction.user.username}\n**Creator ID:** ${interaction.user.id}`
                             }
                         )
                         .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
@@ -302,11 +302,11 @@ client.on('interactionCreate', async interaction => {
                         .addFields(
                             {
                                 name: 'Ticket Information',
-                                value: `**Ticket Name:** \({interaction.channel.name}\n**Ticket ID:**\){generateTicketId()}\n**Created At:** `
+                                value: `**Ticket Name:** ${interaction.channel.name}\n**Ticket ID:** ${generateTicketId()}\n**Created At:** `
                             },
                             {
                                 name: 'Executor Information',
-                                value: `**Executor:** <@\({interaction.user.id}>\n**Executor Username:** @\){interaction.user.username}\n**Executor ID:** ${interaction.user.id}`
+                                value: `**Executor:** <@${interaction.user.id}>\n**Executor Username:** @${interaction.user.username}\n**Executor ID:** ${interaction.user.id}`
                             }
                         )
                         .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
@@ -408,7 +408,7 @@ client.on('interactionCreate', async interaction => {
                 const finalReason = reason ? reason : 'No further action required.';
 
                 await interaction.reply({ 
-                    content: `🔒 This ticket has been closed by <@\({interaction.user.id}>.\n**Reason:**\){finalReason}\n\n*The channel will be deleted in 5 seconds...*`
+                    content: `🔒 This ticket has been closed by <@${interaction.user.id}>.\n**Reason:** ${finalReason}\n\n*The channel will be deleted in 5 seconds...*`
                 }).catch(err => console.error('Channel delete error avoided.'));
 
                 // --- DM TO CREATOR LOGIC ---
@@ -419,7 +419,7 @@ client.on('interactionCreate', async interaction => {
                     const dmEmbed = new EmbedBuilder()
                         .setColor(0x3498DB)
                         .setTitle('Ticket Closed')
-                        .setDescription(`Your ticket has been closed in **Night Trader - Propfirm Community!**\n\n**Ticket Information**\n• **Open Date:** \n• **Panel Name:** 1️⃣ Support / Issues\n• **Ticket Name:** \({interaction.channel.name}\n\n**Close Information**\n• **Closed By:** <@\){interaction.user.id}>\n• **Close Date:** \n• **Close Reason:** ${finalReason}\n\n*If you have any further questions or concerns, feel free to open a new ticket.*`)
+                        .setDescription(`Your ticket has been closed in **Night Trader - Propfirm Community!**\n\n**Ticket Information**\n• **Open Date:** \n• **Panel Name:** 1️⃣ Support / Issues\n• **Ticket Name:** ${interaction.channel.name}\n\n**Close Information**\n• **Closed By:** <@${interaction.user.id}>\n• **Close Date:** \n• **Close Reason:** ${finalReason}\n\n*If you have any further questions or concerns, feel free to open a new ticket.*`)
                         .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
 
                     const voteBtn = new ButtonBuilder()
@@ -458,15 +458,15 @@ client.on('interactionCreate', async interaction => {
                     const logEmbed = new EmbedBuilder()
                         .setColor(0x2B2D31) 
                         .setTitle('Ticket Closed')
-                        .setDescription(`<@\({interaction.user.id}> closed a ticket.\n**Reason:**\){finalReason}`)
+                        .setDescription(`<@${interaction.user.id}> closed a ticket.\n**Reason:** ${finalReason}`)
                         .addFields(
                             {
                                 name: 'Ticket Information',
-                                value: `**Ticket Name:** \({interaction.channel.name}\n**Ticket ID:**\){generateTicketId()}\n**Created At:** `
+                                value: `**Ticket Name:** ${interaction.channel.name}\n**Ticket ID:** ${generateTicketId()}\n**Created At:** `
                             },
                             {
                                 name: 'Executor Information',
-                                value: `**Executor:** <@${interaction.user.id}>\n**Executor Username:** @\({interaction.user.username}\n**Executor ID:**\){interaction.user.id}`
+                                value: `**Executor:** <@${interaction.user.id}>\n**Executor Username:** @${interaction.user.username}\n**Executor ID:** ${interaction.user.id}`
                             }
                         )
                         .setFooter({ 

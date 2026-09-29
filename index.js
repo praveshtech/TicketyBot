@@ -33,6 +33,42 @@ const generateTicketId = () => {
     return result;
 };
 
+// --- HELPER: AUTO-CATEGORY OVERFLOW LOGIC ---
+async function getAvailableTicketCategory(guild) {
+    await guild.channels.fetch(); 
+    const emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+    const baseCategoryId = '1504229014540124180'; 
+    let baseCategory = guild.channels.cache.get(baseCategoryId);
+
+    if (baseCategory && baseCategory.children.cache.size < 50) {
+        return { categoryId: baseCategory.id, emoji: '1️⃣' };
+    }
+
+    for (let i = 1; i < 10; i++) {
+        const currentEmoji = emojis[i];
+        const expectedCatName = `${currentEmoji}-support-issues`;
+        
+        let existingCat = guild.channels.cache.find(c => c.type === ChannelType.GuildCategory && c.name.toLowerCase() === expectedCatName.toLowerCase());
+
+        if (existingCat) {
+            if (existingCat.children.cache.size < 50) return { categoryId: existingCat.id, emoji: currentEmoji };
+        } else {
+            const newCat = await guild.channels.create({
+                name: expectedCatName,
+                type: ChannelType.GuildCategory,
+                permissionOverwrites: [
+                    { id: guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+                    { id: guild.client.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.ManageChannels, PermissionsBitField.Flags.ManageMessages] },
+                    { id: '1415779033156812891', type: 0, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory] },
+                    { id: '1507415051081089108', type: 0, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory] }
+                ]
+            });
+            return { categoryId: newCat.id, emoji: currentEmoji };
+        }
+    }
+    return { categoryId: baseCategoryId, emoji: '1️⃣' };
+}
+
 // 2. Define the /support Slash Command
 const supportCommand = new SlashCommandBuilder()
     .setName('support')
@@ -105,7 +141,8 @@ client.on('interactionCreate', async interaction => {
             });
 
             const userName = interaction.user.username.toLowerCase();
-            const channelName = `1️⃣-support--issues-${userName}`;
+            const { categoryId, emoji } = await getAvailableTicketCategory(interaction.guild);
+            const channelName = `${emoji}-support-issues-${userName}`;
             
             // 🛑 GAGAN AUR NISHANT KI IDs (0 Delay)
             const gaganUserId = '1048219994011484220'; 
@@ -116,7 +153,7 @@ client.on('interactionCreate', async interaction => {
                     name: channelName,
                     type: ChannelType.GuildText,
                     // 🛑 CATEGORY ID
-                    parent: '1504229014540124180', 
+                    parent: categoryId, 
                     permissionOverwrites: [
                         {
                             id: interaction.guild.id, 

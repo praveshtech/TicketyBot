@@ -204,7 +204,7 @@ client.on('interactionCreate', async interaction => {
                 const communityManagerRoleId = '1415779033156812891'; 
                 const ntCommanderRoleId = '1507415051081089108';      
 
-                const pingMessage = `<@\({interaction.user.id}>, <@&\){communityManagerRoleId}>, <@&${ntCommanderRoleId}>`;
+                const pingMessage = `<@\(${interaction.user.id}>, <@&${communityManagerRoleId}>, <@&${ntCommanderRoleId}>`;
 
                 const sentMessage = await ticketChannel.send({
                     content: pingMessage,

@@ -25,6 +25,14 @@ const client = new Client({
     ] 
 });
 
+// Random Ticket ID Generator for Logs
+const generateTicketId = () => {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 19; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+    return result;
+};
+
 // 2. Define the /support Slash Command
 const supportCommand = new SlashCommandBuilder()
     .setName('support')
@@ -99,7 +107,7 @@ client.on('interactionCreate', async interaction => {
             const userName = interaction.user.username.toLowerCase();
             const channelName = `1️⃣-support--issues-${userName}`;
             
-            // 🛑 GAGAN AUR NISHANT KI IDs
+            // 🛑 GAGAN AUR NISHANT KI IDs (0 Delay)
             const gaganUserId = '1048219994011484220'; 
             const nishantUserId = '1214480457098596372';
 
@@ -110,12 +118,10 @@ client.on('interactionCreate', async interaction => {
                     // 🛑 CATEGORY ID
                     parent: '1504229014540124180', 
                     permissionOverwrites: [
-                        // 1. Everyone ko hide karo
                         {
                             id: interaction.guild.id, 
                             deny: [PermissionsBitField.Flags.ViewChannel], 
                         },
-                        // 2. Ticket banane wale (User) ko allow karo
                         {
                             id: interaction.user.id, 
                             allow: [
@@ -124,7 +130,6 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ReadMessageHistory
                             ],
                         },
-                        // 3. Bot ko allow karo
                         {
                             id: interaction.client.user.id, 
                             allow: [
@@ -134,7 +139,6 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ManageMessages 
                             ],
                         },
-                        // 4. Community Manager Role ko allow karo
                         {
                             id: '1415779033156812891',
                             type: 0, 
@@ -144,7 +148,6 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ReadMessageHistory
                             ],
                         },
-                        // 5. NT Commander Role ko allow karo
                         {
                             id: '1507415051081089108',
                             type: 0, 
@@ -154,7 +157,6 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ReadMessageHistory
                             ],
                         },
-                        // 6. Gagan's block (0 delay - Directly Allowed)
                         {
                             id: gaganUserId,
                             type: 1, 
@@ -164,7 +166,6 @@ client.on('interactionCreate', async interaction => {
                                 PermissionsBitField.Flags.ReadMessageHistory
                             ],
                         },
-                        // 7. Nishant's block (0 delay - Directly Allowed)
                         {
                             id: nishantUserId,
                             type: 1, 
@@ -204,12 +205,14 @@ client.on('interactionCreate', async interaction => {
                 const communityManagerRoleId = '1415779033156812891'; 
                 const ntCommanderRoleId = '1507415051081089108';      
 
-                const pingMessage = `<@${interaction.user.id}>, <@&${communityManagerRoleId}>, <@&${ntCommanderRoleId}>`;
+                // PERFECT TAG SYNTAX ($ EVERYWHERE)
+                const pingMessage = `<@\({interaction.user.id}>, <@&\){communityManagerRoleId}>, <@&${ntCommanderRoleId}>`;
 
                 const sentMessage = await ticketChannel.send({
                     content: pingMessage,
                     embeds: [welcomeEmbed],
-                    components: [ticketActionRow]
+                    components: [ticketActionRow],
+                    allowedMentions: { parse: ['users', 'roles'] }
                 });
 
                 await sentMessage.pin();
@@ -217,6 +220,30 @@ client.on('interactionCreate', async interaction => {
                 await interaction.editReply({ 
                     content: `✅ Your ticket has been created here: ${ticketChannel}`, 
                 });
+
+                // 🚨 CREATE TICKET LOG
+                const logChannelId = '1504228496577138789'; 
+                const logChannel = interaction.client.channels.cache.get(logChannelId);
+
+                if (logChannel) {
+                    const createLogEmbed = new EmbedBuilder()
+                        .setColor(0x2B2D31) 
+                        .setTitle('Ticket Created')
+                        .setDescription(`<@${interaction.user.id}> created a ticket.`)
+                        .addFields(
+                            {
+                                name: 'Ticket Information',
+                                value: `**Ticket Name:** \({ticketChannel.name}\n**Ticket ID:**\){generateTicketId()}\n**Created At:** `
+                            },
+                            {
+                                name: 'Creator Information',
+                                value: `**Creator:** <@\({interaction.user.id}>\n**Creator Username:** @\){interaction.user.username}\n**Creator ID:** ${interaction.user.id}`
+                            }
+                        )
+                        .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
+
+                    await logChannel.send({ embeds: [createLogEmbed] });
+                }
 
             } catch (error) {
                 console.error('Error creating ticket:', error);
@@ -229,7 +256,6 @@ client.on('interactionCreate', async interaction => {
         // --- PART C: CLAIM TICKET ---
         if (interaction.customId === 'claim_ticket') {
             try {
-                // 🛑 STAFF ROLES ID
                 const staffRoles = ['1415779033156812891', '1507415051081089108'];
                 const hasPermission = interaction.member.roles.cache.some(role => staffRoles.includes(role.id));
 
@@ -264,6 +290,30 @@ client.on('interactionCreate', async interaction => {
 
                 await interaction.channel.send({ embeds: [claimEmbed] });
 
+                // 🚨 CLAIM TICKET LOG
+                const logChannelId = '1504228496577138789'; 
+                const logChannel = interaction.client.channels.cache.get(logChannelId);
+
+                if (logChannel) {
+                    const claimLogEmbed = new EmbedBuilder()
+                        .setColor(0x2B2D31) 
+                        .setTitle('Ticket Claimed')
+                        .setDescription(`<@${interaction.user.id}> claimed a ticket.`)
+                        .addFields(
+                            {
+                                name: 'Ticket Information',
+                                value: `**Ticket Name:** \({interaction.channel.name}\n**Ticket ID:**\){generateTicketId()}\n**Created At:** `
+                            },
+                            {
+                                name: 'Executor Information',
+                                value: `**Executor:** <@\({interaction.user.id}>\n**Executor Username:** @\){interaction.user.username}\n**Executor ID:** ${interaction.user.id}`
+                            }
+                        )
+                        .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
+
+                    await logChannel.send({ embeds: [claimLogEmbed] });
+                }
+
             } catch (error) {
                 console.error('Error claiming ticket:', error);
             }
@@ -272,7 +322,6 @@ client.on('interactionCreate', async interaction => {
         // --- PART D: UNCLAIM TICKET ---
         if (interaction.customId === 'unclaim_ticket') {
             try {
-                // 🛑 STAFF ROLES ID
                 const staffRoles = ['1415779033156812891', '1507415051081089108'];
                 const hasPermission = interaction.member.roles.cache.some(role => staffRoles.includes(role.id));
 
@@ -315,7 +364,6 @@ client.on('interactionCreate', async interaction => {
         // --- PART E: CLOSE TICKET (Opens Modal) ---
         if (interaction.customId === 'close_ticket') {
             try {
-                // 🛑 STAFF ROLES ID
                 const staffRoles = ['1415779033156812891', '1507415051081089108'];
                 const isStaff = interaction.member.roles.cache.some(role => staffRoles.includes(role.id));
                 const userName = interaction.user.username.toLowerCase();
@@ -359,10 +407,9 @@ client.on('interactionCreate', async interaction => {
                 const reason = interaction.fields.getTextInputValue('close_reason_input');
                 const finalReason = reason ? reason : 'No further action required.';
 
-                // Notify in channel
                 await interaction.reply({ 
-                    content: `🔒 This ticket has been closed by <@${interaction.user.id}>.\n**Reason:** ${finalReason}\n\n*The channel will be deleted in 5 seconds...*`
-                });
+                    content: `🔒 This ticket has been closed by <@\({interaction.user.id}>.\n**Reason:**\){finalReason}\n\n*The channel will be deleted in 5 seconds...*`
+                }).catch(err => console.error('Channel delete error avoided.'));
 
                 // --- DM TO CREATOR LOGIC ---
                 const creatorUsername = interaction.channel.name.split('-').pop(); 
@@ -372,7 +419,7 @@ client.on('interactionCreate', async interaction => {
                     const dmEmbed = new EmbedBuilder()
                         .setColor(0x3498DB)
                         .setTitle('Ticket Closed')
-                        .setDescription(`Your ticket has been closed in **Night Trader - Propfirm Community!**\n\n**Ticket Information**\n• **Open Date:** \n• **Panel Name:** 1️⃣ Support / Issues\n• **Ticket Name:** ${interaction.channel.name}\n\n**Close Information**\n• **Closed By:** <@${interaction.user.id}>\n• **Close Date:** \n• **Close Reason:** ${finalReason}\n\n*If you have any further questions or concerns, feel free to open a new ticket.*`)
+                        .setDescription(`Your ticket has been closed in **Night Trader - Propfirm Community!**\n\n**Ticket Information**\n• **Open Date:** \n• **Panel Name:** 1️⃣ Support / Issues\n• **Ticket Name:** \({interaction.channel.name}\n\n**Close Information**\n• **Closed By:** <@\){interaction.user.id}>\n• **Close Date:** \n• **Close Reason:** ${finalReason}\n\n*If you have any further questions or concerns, feel free to open a new ticket.*`)
                         .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
 
                     const voteBtn = new ButtonBuilder()
@@ -404,30 +451,22 @@ client.on('interactionCreate', async interaction => {
                 }
 
                 // --- TICKET LOGGING LOGIC ---
-                // 🛑 LOG CHANNEL ID
                 const logChannelId = '1504228496577138789'; 
                 const logChannel = interaction.client.channels.cache.get(logChannelId);
 
                 if (logChannel) {
-                    const generateTicketId = () => {
-                        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-                        let result = '';
-                        for (let i = 0; i < 19; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-                        return result;
-                    };
-
                     const logEmbed = new EmbedBuilder()
-                        .setColor(0x3498DB) 
+                        .setColor(0x2B2D31) 
                         .setTitle('Ticket Closed')
-                        .setDescription(`<@${interaction.user.id}> closed a ticket.\n**Reason:** ${finalReason}`)
+                        .setDescription(`<@\({interaction.user.id}> closed a ticket.\n**Reason:**\){finalReason}`)
                         .addFields(
                             {
                                 name: 'Ticket Information',
-                                value: `> **Ticket Name:** ${interaction.channel.name}\n> **Ticket ID:** ${generateTicketId()}\n> **Created At:** `
+                                value: `**Ticket Name:** \({interaction.channel.name}\n**Ticket ID:**\){generateTicketId()}\n**Created At:** `
                             },
                             {
                                 name: 'Executor Information',
-                                value: `> **Executor:** <@${interaction.user.id}>\n> **Executor Username:** @${interaction.user.username}\n> **Executor ID:** ${interaction.user.id}`
+                                value: `**Executor:** <@${interaction.user.id}>\n**Executor Username:** @\({interaction.user.username}\n**Executor ID:**\){interaction.user.id}`
                             }
                         )
                         .setFooter({ 
@@ -436,8 +475,6 @@ client.on('interactionCreate', async interaction => {
                         });
 
                     await logChannel.send({ embeds: [logEmbed] });
-                } else {
-                    console.error('Log channel not found! Make sure the ID is correct and bot has access to it.');
                 }
 
                 // Delete channel after 5 seconds

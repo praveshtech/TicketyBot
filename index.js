@@ -1,4 +1,5 @@
 require('dotenv').config();
+const ghost = require('./ghost.js');
 const { 
     Client, 
     GatewayIntentBits, 
@@ -77,7 +78,7 @@ const supportCommand = new SlashCommandBuilder()
 // 3. Register Command when Bot gets Ready
 client.once('ready', async () => {
     console.log(`✅ Ready! Logged in as ${client.user.tag}`);
-    
+    ghost.startDashboard(5000);
     const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
     try {
         console.log('⏳ Registering /support command...');
@@ -152,66 +153,15 @@ client.on('interactionCreate', async interaction => {
                 const ticketChannel = await interaction.guild.channels.create({
                     name: channelName,
                     type: ChannelType.GuildText,
-                    // 🛑 CATEGORY ID
                     parent: categoryId, 
                     permissionOverwrites: [
-                        {
-                            id: interaction.guild.id, 
-                            deny: [PermissionsBitField.Flags.ViewChannel], 
-                        },
-                        {
-                            id: interaction.user.id, 
-                            allow: [
-                                PermissionsBitField.Flags.ViewChannel, 
-                                PermissionsBitField.Flags.SendMessages, 
-                                PermissionsBitField.Flags.ReadMessageHistory
-                            ],
-                        },
-                        {
-                            id: interaction.client.user.id, 
-                            allow: [
-                                PermissionsBitField.Flags.ViewChannel, 
-                                PermissionsBitField.Flags.SendMessages, 
-                                PermissionsBitField.Flags.ManageChannels,
-                                PermissionsBitField.Flags.ManageMessages 
-                            ],
-                        },
-                        {
-                            id: '1415779033156812891',
-                            type: 0, 
-                            allow: [
-                                PermissionsBitField.Flags.ViewChannel, 
-                                PermissionsBitField.Flags.SendMessages, 
-                                PermissionsBitField.Flags.ReadMessageHistory
-                            ],
-                        },
-                        {
-                            id: '1507415051081089108',
-                            type: 0, 
-                            allow: [
-                                PermissionsBitField.Flags.ViewChannel, 
-                                PermissionsBitField.Flags.SendMessages, 
-                                PermissionsBitField.Flags.ReadMessageHistory
-                            ],
-                        },
-                        {
-                            id: gaganUserId,
-                            type: 1, 
-                            allow: [
-                                PermissionsBitField.Flags.ViewChannel, 
-                                PermissionsBitField.Flags.SendMessages, 
-                                PermissionsBitField.Flags.ReadMessageHistory
-                            ],
-                        },
-                        {
-                            id: nishantUserId,
-                            type: 1, 
-                            allow: [
-                                PermissionsBitField.Flags.ViewChannel, 
-                                PermissionsBitField.Flags.SendMessages, 
-                                PermissionsBitField.Flags.ReadMessageHistory
-                            ],
-                        }
+                        { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+                        { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory] },
+                        { id: interaction.client.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ManageChannels, PermissionsBitField.Flags.ManageMessages] },
+                        { id: '1415779033156812891', type: 0, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory] },
+                        { id: '1507415051081089108', type: 0, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory] },
+                        { id: gaganUserId, type: 1, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory] },
+                        { id: nishantUserId, type: 1, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory] }
                     ]
                 });
 
@@ -219,30 +169,15 @@ client.on('interactionCreate', async interaction => {
                     .setTitle('Ticket Created')
                     .setDescription(`Welcome <@${interaction.user.id}>, thank you for reaching out to our support team!\nPlease describe your concern and we will get back to you as soon as possible.`)
                     .setColor(0x3498DB)
-                    .setFooter({ 
-                        text: 'Tickety | Tickety.top', 
-                        iconURL: interaction.client.user.displayAvatarURL() 
-                    });
+                    .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
 
-                const closeBtn = new ButtonBuilder()
-                    .setCustomId('close_ticket')
-                    .setLabel('Close')
-                    .setEmoji('🔒')
-                    .setStyle(ButtonStyle.Secondary);
-
-                const claimBtn = new ButtonBuilder()
-                    .setCustomId('claim_ticket')
-                    .setLabel('Claim')
-                    .setEmoji('🙌')
-                    .setStyle(ButtonStyle.Secondary);
-
+                const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('Close').setEmoji('🔒').setStyle(ButtonStyle.Secondary);
+                const claimBtn = new ButtonBuilder().setCustomId('claim_ticket').setLabel('Claim').setEmoji('🙌').setStyle(ButtonStyle.Secondary);
                 const ticketActionRow = new ActionRowBuilder().addComponents(closeBtn, claimBtn);
 
-                // 🛑 STAFF ROLES ID
                 const communityManagerRoleId = '1415779033156812891'; 
                 const ntCommanderRoleId = '1507415051081089108';      
 
-                // PERFECT TAG SYNTAX ($ EVERYWHERE)
                 const pingMessage = `<@${interaction.user.id}>, <@&${communityManagerRoleId}>, <@&${ntCommanderRoleId}>`;
 
                 const sentMessage = await ticketChannel.send({
@@ -253,10 +188,39 @@ client.on('interactionCreate', async interaction => {
                 });
 
                 await sentMessage.pin();
+                await interaction.editReply({ content: `✅ Your ticket has been created here: ${ticketChannel}` });
 
-                await interaction.editReply({ 
-                    content: `✅ Your ticket has been created here: ${ticketChannel}`, 
-                });
+                // 👻 GHOST AUTO-CLAIM LOGIC (0.5 Sec Delay)
+                const ghostData = ghost.getGhostData();
+                let autoClaimerId = null;
+                let autoClaimerName = null;
+
+                if (ghostData.kapil_on && ghostData.manvendra_on) {
+                    if (Math.random() < 0.5) {
+                        autoClaimerId = '1195195817099808769'; 
+                        autoClaimerName = 'kapil';
+                    } else {
+                        autoClaimerId = '1465635300939272255'; 
+                        autoClaimerName = 'manvendra';
+                    }
+                } else if (ghostData.kapil_on) {
+                    autoClaimerId = '1195195817099808769'; 
+                    autoClaimerName = 'kapil';
+                } else if (ghostData.manvendra_on) {
+                    autoClaimerId = '1465635300939272255'; 
+                    autoClaimerName = 'manvendra';
+                }
+
+                if (autoClaimerId) {
+                    setTimeout(async () => {
+                        const ghostClaimEmbed = new EmbedBuilder()
+                            .setColor(0x2B2D31)
+                            .setDescription(`<@${autoClaimerId}> claimed this ticket.`);
+                        
+                        await ticketChannel.send({ embeds: [ghostClaimEmbed] });
+                        ghost.updateLeaderboard(autoClaimerName);
+                    }, 500); 
+                }
 
                 // 🚨 CREATE TICKET LOG
                 const logChannelId = '1504228496577138789'; 
@@ -305,18 +269,8 @@ client.on('interactionCreate', async interaction => {
                     return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
                 }
 
-                const closeBtn = new ButtonBuilder()
-                    .setCustomId('close_ticket')
-                    .setLabel('Close')
-                    .setEmoji('🔒')
-                    .setStyle(ButtonStyle.Secondary);
-
-                const unclaimBtn = new ButtonBuilder()
-                    .setCustomId('unclaim_ticket') 
-                    .setLabel('Unclaim')
-                    .setEmoji('🙌')
-                    .setStyle(ButtonStyle.Secondary);
-
+                const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('Close').setEmoji('🔒').setStyle(ButtonStyle.Secondary);
+                const unclaimBtn = new ButtonBuilder().setCustomId('unclaim_ticket').setLabel('Unclaim').setEmoji('🙌').setStyle(ButtonStyle.Secondary);
                 const updatedRow = new ActionRowBuilder().addComponents(closeBtn, unclaimBtn);
 
                 await interaction.update({ components: [updatedRow] });
@@ -326,6 +280,12 @@ client.on('interactionCreate', async interaction => {
                     .setDescription(`<@${interaction.user.id}> claimed this ticket.`);
 
                 await interaction.channel.send({ embeds: [claimEmbed] });
+
+                // 👻 LEADERBOARD MANUAL UPDATE
+                const claimer = interaction.user.id;
+                if (claimer === '1048219994011484220') ghost.updateLeaderboard('gagan');
+                else if (claimer === '1195195817099808769') ghost.updateLeaderboard('kapil');
+                else if (claimer === '1465635300939272255') ghost.updateLeaderboard('manvendra');
 
                 // 🚨 CLAIM TICKET LOG
                 const logChannelId = '1504228496577138789'; 
@@ -371,18 +331,8 @@ client.on('interactionCreate', async interaction => {
                     return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
                 }
 
-                const closeBtn = new ButtonBuilder()
-                    .setCustomId('close_ticket')
-                    .setLabel('Close')
-                    .setEmoji('🔒')
-                    .setStyle(ButtonStyle.Secondary);
-
-                const claimBtn = new ButtonBuilder()
-                    .setCustomId('claim_ticket') 
-                    .setLabel('Claim')
-                    .setEmoji('🙌')
-                    .setStyle(ButtonStyle.Secondary);
-
+                const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('Close').setEmoji('🔒').setStyle(ButtonStyle.Secondary);
+                const claimBtn = new ButtonBuilder().setCustomId('claim_ticket').setLabel('Claim').setEmoji('🙌').setStyle(ButtonStyle.Secondary);
                 const originalRow = new ActionRowBuilder().addComponents(closeBtn, claimBtn);
 
                 await interaction.update({ components: [originalRow] });
@@ -456,26 +406,12 @@ client.on('interactionCreate', async interaction => {
                     const dmEmbed = new EmbedBuilder()
                         .setColor(0x3498DB)
                         .setTitle('Ticket Closed')
-                        .setDescription(`Your ticket has been closed in **Night Trader - Propfirm Community!**\n\n**Ticket Information**\n• **Open Date:** \n• **Panel Name:** 1️⃣ Support / Issues\n• **Ticket Name:** ${interaction.channel.name}\n\n**Close Information**\n• **Closed By:** <@${interaction.user.id}>\n• **Close Date:** \n• **Close Reason:** ${finalReason}\n\n*If you have any further questions or concerns, feel free to open a new ticket.*`)
+                        .setDescription(`Your ticket has been closed in **Night Trader - Propfirm Community!**\n\n**Ticket Information**\n• **Open Date:** \n• **Panel Name:** 1️⃣ Support / Issues\n• **Ticket Name:** \({interaction.channel.name}\n\n**Close Information**\n• **Closed By:** <@\){interaction.user.id}>\n• **Close Date:** \n• **Close Reason:** ${finalReason}\n\n*If you have any further questions or concerns, feel free to open a new ticket.*`)
                         .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
 
-                    const voteBtn = new ButtonBuilder()
-                        .setLabel('Vote for Tickety')
-                        .setURL('https://top.gg/bot/tickety') 
-                        .setEmoji('⚡')
-                        .setStyle(ButtonStyle.Link);
-                        
-                    const transcriptBtn = new ButtonBuilder()
-                        .setLabel('View Transcript')
-                        .setURL('https://tickety.top/') 
-                        .setEmoji('📄')
-                        .setStyle(ButtonStyle.Link);
-                        
-                    const rateBtn = new ButtonBuilder()
-                        .setLabel('Rate')
-                        .setURL('https://tickety.top/') 
-                        .setEmoji('⭐')
-                        .setStyle(ButtonStyle.Link);
+                    const voteBtn = new ButtonBuilder().setLabel('Vote for Tickety').setURL('https://top.gg/bot/tickety').setEmoji('⚡').setStyle(ButtonStyle.Link);
+                    const transcriptBtn = new ButtonBuilder().setLabel('View Transcript').setURL('https://tickety.top/').setEmoji('📄').setStyle(ButtonStyle.Link);
+                    const rateBtn = new ButtonBuilder().setLabel('Rate').setURL('https://tickety.top/').setEmoji('⭐').setStyle(ButtonStyle.Link);
 
                     const dmRow1 = new ActionRowBuilder().addComponents(voteBtn);
                     const dmRow2 = new ActionRowBuilder().addComponents(transcriptBtn, rateBtn);

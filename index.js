@@ -406,7 +406,7 @@ client.on('interactionCreate', async interaction => {
                     const dmEmbed = new EmbedBuilder()
                         .setColor(0x3498DB)
                         .setTitle('Ticket Closed')
-                        .setDescription(`Your ticket has been closed in **Night Trader - Propfirm Community!**\n\n**Ticket Information**\n• **Open Date:** \n• **Panel Name:** 1️⃣ Support / Issues\n• **Ticket Name:** \({interaction.channel.name}\n\n**Close Information**\n• **Closed By:** <@\){interaction.user.id}>\n• **Close Date:** \n• **Close Reason:** ${finalReason}\n\n*If you have any further questions or concerns, feel free to open a new ticket.*`)
+                        .setDescription(`Your ticket has been closed in **Night Trader - Propfirm Community!**\n\n**Ticket Information**\n• **Open Date:** \n• **Panel Name:** 1️⃣ Support / Issues\n• **Ticket Name:** ${interaction.channel.name}\n\n**Close Information**\n• **Closed By:** <@${interaction.user.id}>\n• **Close Date:** \n• **Close Reason:** ${finalReason}\n\n*If you have any further questions or concerns, feel free to open a new ticket.*`)
                         .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
 
                     const voteBtn = new ButtonBuilder().setLabel('Vote for Tickety').setURL('https://top.gg/bot/tickety').setEmoji('⚡').setStyle(ButtonStyle.Link);

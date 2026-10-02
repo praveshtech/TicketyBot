@@ -213,12 +213,25 @@ client.on('interactionCreate', async interaction => {
 
                 if (autoClaimerId) {
                     setTimeout(async () => {
+                        // 1. Claim wala message bhejo
                         const ghostClaimEmbed = new EmbedBuilder()
                             .setColor(0x2B2D31)
                             .setDescription(`<@${autoClaimerId}> claimed this ticket.`);
                         
                         await ticketChannel.send({ embeds: [ghostClaimEmbed] });
                         ghost.updateLeaderboard(autoClaimerName);
+
+                        // 👇 2. NAYA CODE: Button ko 'Unclaim' mein change karne ke liye 👇
+                        const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('Close').setEmoji('🔒').setStyle(ButtonStyle.Secondary);
+                        const unclaimBtn = new ButtonBuilder().setCustomId('unclaim_ticket').setLabel('Unclaim').setEmoji('🙌').setStyle(ButtonStyle.Secondary);
+                        const updatedRow = new ActionRowBuilder().addComponents(closeBtn, unclaimBtn);
+
+                        // Original welcome message (sentMessage) ko edit karke usme unclaim button lagao
+                        if (sentMessage) {
+                            await sentMessage.edit({ components: [updatedRow] }).catch(err => console.error('Button update error:', err));
+                        }
+                        // 👆 NAYA CODE KHATAM 👆
+
                     }, 500); 
                 }
 

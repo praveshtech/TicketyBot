@@ -450,9 +450,11 @@ client.on('interactionCreate', async interaction => {
                     await logChannel.send({ embeds: [logEmbed] });
                 }
 
-                // Delete channel after 5 seconds
+                // Delete channel after 5 seconds (Safe Check)
                 setTimeout(async () => {
-                    await interaction.channel.delete().catch(error => console.error('Error deleting channel:', error));
+                   if (interaction.channel) {
+                        await interaction.channel.delete().catch(error => console.error('Error deleting channel:', error));
+                    }
                 }, 5000);
 
             } catch (error) {

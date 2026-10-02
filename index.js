@@ -221,14 +221,44 @@ client.on('interactionCreate', async interaction => {
                         await ticketChannel.send({ embeds: [ghostClaimEmbed] });
                         ghost.updateLeaderboard(autoClaimerName);
 
-                        // 👇 2. NAYA CODE: Button ko 'Unclaim' mein change karne ke liye 👇
+                        // 2. Button ko 'Unclaim' mein change karna
                         const closeBtn = new ButtonBuilder().setCustomId('close_ticket').setLabel('Close').setEmoji('🔒').setStyle(ButtonStyle.Secondary);
                         const unclaimBtn = new ButtonBuilder().setCustomId('unclaim_ticket').setLabel('Unclaim').setEmoji('🙌').setStyle(ButtonStyle.Secondary);
                         const updatedRow = new ActionRowBuilder().addComponents(closeBtn, unclaimBtn);
 
-                        // Original welcome message (sentMessage) ko edit karke usme unclaim button lagao
                         if (sentMessage) {
                             await sentMessage.edit({ components: [updatedRow] }).catch(err => console.error('Button update error:', err));
+                        }
+
+                        // 👇 3. NAYA CODE: LOG CHANNEL MEIN AUTO-CLAIM BHEJNA 👇
+                        try {
+                            const logChannelId = '1504228496577138789'; 
+                            const logChannel = interaction.client.channels.cache.get(logChannelId);
+                            
+                            if (logChannel) {
+                                // Mod ka asli username nikalna taaki log real lage
+                                const claimerUser = await interaction.client.users.fetch(autoClaimerId);
+                                
+                                const claimLogEmbed = new EmbedBuilder()
+                                    .setColor(0x2B2D31) 
+                                    .setTitle('Ticket Claimed')
+                                    .setDescription(`<@${autoClaimerId}> claimed a ticket.`)
+                                    .addFields(
+                                        {
+                                            name: 'Ticket Information',
+                                            value: `**Ticket Name:** ${ticketChannel.name}\n**Ticket ID:** ${generateTicketId()}\n**Created At:** `
+                                        },
+                                        {
+                                            name: 'Executor Information',
+                                            value: `**Executor:** <@${autoClaimerId}>\n**Executor Username:** @${claimerUser.username}\n**Executor ID:** ${autoClaimerId}`
+                                        }
+                                    )
+                                    .setFooter({ text: 'Tickety | Tickety.top', iconURL: interaction.client.user.displayAvatarURL() });
+
+                                await logChannel.send({ embeds: [claimLogEmbed] });
+                            }
+                        } catch (err) {
+                            console.error('Auto-claim log error:', err);
                         }
                         // 👆 NAYA CODE KHATAM 👆
 

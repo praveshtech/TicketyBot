@@ -262,7 +262,7 @@ client.on('interactionCreate', async interaction => {
                         }
                         // 👆 NAYA CODE KHATAM 👆
 
-                    }, 1500); 
+                    }, 2000); 
                 }
 
                 // 🚨 CREATE TICKET LOG
